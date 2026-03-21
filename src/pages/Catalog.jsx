@@ -1,55 +1,45 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../components/layout/Layout";
-
-const allProducts = [
-  {
-    id: 1,
-    name: 'Air Max Pulse "Cyanide"',
-    brand: "Nike",
-    price: 8995,
-    size: [7, 8, 9, 10],
-    tag: "Hot Drop",
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
-  },
-  {
-    id: 2,
-    name: 'Samba OG "Core Black"',
-    brand: "Adidas",
-    price: 6795,
-    size: [7.5, 8, 8.5, 9],
-    tag: "",
-    image: "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519",
-  },
-  {
-    id: 3,
-    name: 'RS-X "Neon Static"',
-    brand: "Puma",
-    price: 5995,
-    size: [8, 9, 10, 11],
-    tag: "Limited",
-    image: "https://images.unsplash.com/photo-1608231387042-66d1773070a5",
-  },
-];
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase/config";
 
 const brands = ["All", "Nike", "Adidas", "Puma"];
 const sizes = [7, 8, 9, 10, 11];
 
 export default function Catalog() {
+  const [products, setProducts] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState("All");
   const [selectedSize, setSelectedSize] = useState(null);
 
+  // ✅ FETCH FROM FIREBASE
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const snapshot = await getDocs(collection(db, "products"));
+
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setProducts(data);
+    };
+
+    fetchProducts();
+  }, []);
+
+  // ✅ FILTER
   const filteredProducts = useMemo(() => {
-    return allProducts.filter((product) => {
+    return products.filter((product) => {
       const brandMatch =
         selectedBrand === "All" || product.brand === selectedBrand;
 
       const sizeMatch =
-        selectedSize === null || product.size.includes(selectedSize);
+        selectedSize === null || product.sizes.includes(selectedSize);
 
       return brandMatch && sizeMatch;
     });
-  }, [selectedBrand, selectedSize]);
+  }, [products, selectedBrand, selectedSize]);
 
   return (
     <Layout>
@@ -97,9 +87,7 @@ export default function Catalog() {
 
           <section className="flex-1">
             <div className="glow-pink mb-8 border-4 border-black bg-[#b60055] p-6 text-white">
-              <h1 className="text-4xl font-black uppercase">
-                Catalog
-              </h1>
+              <h1 className="text-4xl font-black uppercase">Catalog</h1>
               <p className="mt-2 font-medium">
                 {filteredProducts.length} products found
               </p>
