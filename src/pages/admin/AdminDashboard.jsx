@@ -1,33 +1,43 @@
 import { useEffect, useState } from "react";
 import Layout from "../../components/layout/Layout";
-import { addDoc, collection, getDocs } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../../firebase/config";
 
-export default function AdminDashboard() {
-  const [formData, setFormData] = useState({
-    name: "",
-    brand: "",
-    price: "",
-    sizes: "",
-    image: "",
-    description: "",
-    tag: "",
-  });
+const initialFormData = {
+  name: "",
+  brand: "",
+  price: "",
+  sizes: "",
+  image: "",
+  description: "",
+  tag: "",
+};
 
+export default function AdminDashboard() {
+  const [formData, setFormData] = useState(initialFormData);
   const [products, setProducts] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [editingProductId, setEditingProductId] = useState(null);
 
   const fetchProducts = async () => {
     try {
       const snapshot = await getDocs(collection(db, "products"));
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
+      const data = snapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data(),
       }));
       setProducts(data);
     } catch (error) {
       console.error("Error fetching products:", error);
+      setMessage("Failed to load products.");
     }
   };
 
@@ -41,6 +51,18 @@ export default function AdminDashboard() {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const resetForm = () => {
+    setFormData(initialFormData);
+    setEditingProductId(null);
+  };
+
+  const parseSizes = (sizesText) => {
+    return sizesText
+      .split(",")
+      .map((size) => Number(size.trim()))
+      .filter((size) => !Number.isNaN(size));
   };
 
   const handleSubmit = async (e) => {
@@ -65,46 +87,78 @@ export default function AdminDashboard() {
       return;
     }
 
-    const parsedSizes = formData.sizes
-      .split(",")
-      .map((size) => Number(size.trim()))
-      .filter((size) => !Number.isNaN(size));
+    const parsedSizes = parseSizes(formData.sizes);
 
     if (parsedSizes.length === 0) {
       setMessage("Sizes must be valid numbers separated by commas.");
       return;
     }
 
+    const payload = {
+      name: trimmedName,
+      brand: trimmedBrand,
+      price: Number(formData.price),
+      sizes: parsedSizes,
+      image: trimmedImage,
+      description: trimmedDescription,
+      tag: trimmedTag,
+    };
+
     try {
       setIsSaving(true);
 
-      await addDoc(collection(db, "products"), {
-        name: trimmedName,
-        brand: trimmedBrand,
-        price: Number(formData.price),
-        sizes: parsedSizes,
-        image: trimmedImage,
-        description: trimmedDescription,
-        tag: trimmedTag,
-      });
+      if (editingProductId) {
+        await updateDoc(doc(db, "products", editingProductId), payload);
+        setMessage("Product updated successfully.");
+      } else {
+        await addDoc(collection(db, "products"), payload);
+        setMessage("Product saved successfully.");
+      }
 
-      setFormData({
-        name: "",
-        brand: "",
-        price: "",
-        sizes: "",
-        image: "",
-        description: "",
-        tag: "",
-      });
-
-      setMessage("Product saved successfully.");
+      resetForm();
       fetchProducts();
     } catch (error) {
-      console.error("Error adding product:", error);
+      console.error("Error saving product:", error);
       setMessage("Failed to save product.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleEdit = (product) => {
+    setEditingProductId(product.id);
+    setFormData({
+      name: product.name || "",
+      brand: product.brand || "",
+      price: product.price ?? "",
+      sizes: Array.isArray(product.sizes) ? product.sizes.join(",") : "",
+      image: product.image || "",
+      description: product.description || "",
+      tag: product.tag || "",
+    });
+    setMessage(`Editing "${product.name}"`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (productId, productName) => {
+    const confirmed = window.confirm(
+      `Delete "${productName}" from inventory?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteDoc(doc(db, "products", productId));
+      setMessage("Product deleted successfully.");
+
+      if (editingProductId === productId) {
+        resetForm();
+      }
+
+      fetchProducts();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      setMessage("Failed to delete product.");
     }
   };
 
@@ -120,7 +174,7 @@ export default function AdminDashboard() {
 
             <div className="mt-8 space-y-3">
               <div className="border-2 border-black bg-[#b60055] px-4 py-3 font-bold uppercase text-white">
-                Add Product
+                {editingProductId ? "Edit Product" : "Add Product"}
               </div>
               <div className="border-2 border-black bg-white px-4 py-3 font-bold uppercase">
                 Inventory
@@ -138,15 +192,27 @@ export default function AdminDashboard() {
             <div className="glow-pink border-4 border-black bg-[#b60055] p-6 text-white">
               <h1 className="text-4xl font-black uppercase">Admin Dashboard</h1>
               <p className="mt-2 font-medium">
-                Add and manage sneaker products for the catalog.
+                Add, update, and manage sneaker products for the catalog.
               </p>
             </div>
 
             <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1.1fr_0.9fr]">
               <div className="glow-pink border-4 border-black bg-white p-6">
-                <h2 className="mb-6 text-2xl font-black uppercase">
-                  Add Product
-                </h2>
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <h2 className="text-2xl font-black uppercase">
+                    {editingProductId ? "Edit Product" : "Add Product"}
+                  </h2>
+
+                  {editingProductId && (
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="border-2 border-black bg-white px-4 py-2 text-sm font-black uppercase hover:-translate-y-0.5 transition"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
 
                 <form onSubmit={handleSubmit} className="grid gap-5">
                   <div>
@@ -258,7 +324,13 @@ export default function AdminDashboard() {
                     disabled={isSaving}
                     className="border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isSaving ? "Saving..." : "Save Product"}
+                    {isSaving
+                      ? editingProductId
+                        ? "Updating..."
+                        : "Saving..."
+                      : editingProductId
+                      ? "Update Product"
+                      : "Save Product"}
                   </button>
                 </form>
               </div>
@@ -295,6 +367,26 @@ export default function AdminDashboard() {
                               {product.tag}
                             </span>
                           )}
+                        </div>
+
+                        <div className="mt-4 flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(product)}
+                            className="border-2 border-black bg-white px-4 py-2 text-sm font-black uppercase hover:-translate-y-0.5 transition"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDelete(product.id, product.name)
+                            }
+                            className="border-2 border-black bg-black px-4 py-2 text-sm font-black uppercase text-white hover:-translate-y-0.5 transition"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </div>
                     ))
