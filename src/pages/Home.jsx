@@ -47,6 +47,8 @@ export default function Home() {
     fetchNewArrivals();
   }, []);
 
+  const featuredBrands = ["Nike", "Adidas", "Puma", "New Balance"];
+
   return (
     <Layout>
       <section className="px-6 py-10 md:px-10 lg:px-16">
@@ -107,13 +109,14 @@ export default function Home() {
           </h2>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {["Nike", "Adidas", "Puma", "New Balance"].map((brand) => (
-              <div
+            {featuredBrands.map((brand) => (
+              <Link
                 key={brand}
-                className="glow-hover flex items-center justify-center border-4 border-black bg-white py-6 text-lg font-bold uppercase"
+                to={`/catalog?brand=${encodeURIComponent(brand)}`}
+                className="glow-hover flex items-center justify-center border-4 border-black bg-white py-6 text-center text-lg font-bold uppercase"
               >
                 {brand}
-              </div>
+              </Link>
             ))}
           </div>
         </div>
