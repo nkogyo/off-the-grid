@@ -289,7 +289,7 @@ export default function Home() {
 
               <Link
                 to="/catalog"
-                className="card-hover border-2 border-black bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.2em]"
+                className="panel-shadow border-2 border-black bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.2em]"
               >
                 View All.exe →
               </Link>
@@ -444,10 +444,18 @@ export default function Home() {
         <section className="px-6 pt-20 md:px-10 lg:px-16">
           <div className="mx-auto max-w-7xl">
             <div className="mb-8 flex items-center justify-between gap-4">
-              <h2 className="text-4xl font-black uppercase">Latest Updates</h2>
+              <div className="panel-shadow inline-block border-2 border-black bg-white px-4 py-3">
+                <p className="section-kicker">Update Feed</p>
+                <h2 className="mt-1 text-4xl font-black uppercase">
+                  Latest Updates
+                </h2>
+              </div>
 
-              <Link to="/updates" className="font-bold underline">
-                View All Updates
+              <Link
+                to="/updates"
+                className="panel-shadow border-2 border-black bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.2em]"
+              >
+                View All.exe →
               </Link>
             </div>
 
@@ -498,14 +506,6 @@ export default function Home() {
             <h2 className="text-5xl font-black uppercase">
               Off The <span className="pink-accent italic">Grid</span>
             </h2>
-
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-[11px] font-bold uppercase tracking-[0.22em] text-gray-500">
-              <span>Locations</span>
-              <span>Contact</span>
-              <span>Careers</span>
-              <span>Terms</span>
-              <span>Privacy</span>
-            </div>
 
             <div className="mt-10 flex items-center justify-center gap-4">
               <span className="icon-chip">⌁</span>
