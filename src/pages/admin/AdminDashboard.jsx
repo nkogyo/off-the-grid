@@ -74,6 +74,33 @@ const initialHomepageContent = {
   promoTileThreeTitle: "Engineered Motion",
 };
 
+const initialAboutContent = {
+  heroKicker: "About the Store",
+  heroTitle: "Off The Grid",
+  heroDescription:
+    "Off The Grid is a shoe and sneaker retailer focused on showcasing stylish, branded, and newly released footwear. The store highlights strong visual presentation, curated collections, and easy access to product information so customers can browse with confidence.",
+
+  storyTitle: "Our Story",
+  storyParagraphOne:
+    "What started as a simple sneaker retail concept grew into a product showcase platform where customers can explore different brands, compare styles, and keep up with new arrivals.",
+  storyParagraphTwo:
+    "The goal of the platform is not only to display inventory, but also to help attract more buyers through a clean, bold, and visually engaging website experience.",
+
+  ownerTitle: "Owner",
+
+  featureOneTitle: "Multiple Brands",
+  featureOneDescription:
+    "Browse shoes and sneakers from well-known local and global brands in one place.",
+
+  featureTwoTitle: "New Arrivals",
+  featureTwoDescription:
+    "Stay updated with newly released and newly added products in the catalog.",
+
+  featureThreeTitle: "Easy Inquiry",
+  featureThreeDescription:
+    "Customers can quickly view contact details and ask about availability or store visits.",
+};
+
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("add-product");
 
@@ -104,6 +131,10 @@ export default function AdminDashboard() {
   const [homepageContent, setHomepageContent] = useState(initialHomepageContent);
   const [homepageMessage, setHomepageMessage] = useState("");
   const [isSavingHomepage, setIsSavingHomepage] = useState(false);
+
+  const [aboutContent, setAboutContent] = useState(initialAboutContent);
+  const [aboutMessage, setAboutMessage] = useState("");
+  const [isSavingAbout, setIsSavingAbout] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -209,6 +240,27 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchAboutContent = async () => {
+    try {
+      setAboutMessage("");
+      const aboutRef = doc(db, "aboutContent", "main");
+      const aboutSnap = await getDoc(aboutRef);
+
+      if (aboutSnap.exists()) {
+        setAboutContent((prev) => ({
+          ...prev,
+          ...aboutSnap.data(),
+        }));
+      } else {
+        await setDoc(aboutRef, initialAboutContent);
+        setAboutContent(initialAboutContent);
+      }
+    } catch (error) {
+      console.error("Error fetching about content:", error);
+      setAboutMessage("Failed to load about page content.");
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchStoreInfo();
@@ -216,6 +268,7 @@ export default function AdminDashboard() {
     fetchBrands();
     fetchFeaturedProduct();
     fetchHomepageContent();
+    fetchAboutContent();
   }, []);
 
   const handleLogout = async () => {
@@ -579,6 +632,53 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleAboutContentChange = (e) => {
+    const { name, value } = e.target;
+    setAboutContent((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleAboutContentSubmit = async (e) => {
+    e.preventDefault();
+    setAboutMessage("");
+
+    try {
+      setIsSavingAbout(true);
+
+      const payload = {
+        heroKicker: aboutContent.heroKicker.trim(),
+        heroTitle: aboutContent.heroTitle.trim(),
+        heroDescription: aboutContent.heroDescription.trim(),
+
+        storyTitle: aboutContent.storyTitle.trim(),
+        storyParagraphOne: aboutContent.storyParagraphOne.trim(),
+        storyParagraphTwo: aboutContent.storyParagraphTwo.trim(),
+
+        ownerTitle: aboutContent.ownerTitle.trim(),
+
+        featureOneTitle: aboutContent.featureOneTitle.trim(),
+        featureOneDescription: aboutContent.featureOneDescription.trim(),
+
+        featureTwoTitle: aboutContent.featureTwoTitle.trim(),
+        featureTwoDescription: aboutContent.featureTwoDescription.trim(),
+
+        featureThreeTitle: aboutContent.featureThreeTitle.trim(),
+        featureThreeDescription: aboutContent.featureThreeDescription.trim(),
+      };
+
+      await setDoc(doc(db, "aboutContent", "main"), payload);
+      setAboutContent(payload);
+      setAboutMessage("About page content saved successfully.");
+    } catch (error) {
+      console.error("Error saving about content:", error);
+      setAboutMessage("Failed to save about page content.");
+    } finally {
+      setIsSavingAbout(false);
+    }
+  };
+
   const renderSidebarButton = (id, label) => {
     const isActive = activeSection === id;
 
@@ -609,7 +709,7 @@ export default function AdminDashboard() {
             <h2 className="text-2xl font-black uppercase">Admin Panel</h2>
             <p className="mt-2 text-sm font-medium text-gray-600">
               Manage products, updates, store details, brands, featured sneaker,
-              and homepage content.
+              homepage content, and about page content.
             </p>
 
             <div className="mt-8 space-y-3">
@@ -620,6 +720,7 @@ export default function AdminDashboard() {
               {renderSidebarButton("brands", "Brands")}
               {renderSidebarButton("featured-sneaker", "Featured Sneaker")}
               {renderSidebarButton("homepage-content", "Homepage Content")}
+              {renderSidebarButton("about-content", "About Content")}
             </div>
           </aside>
 
@@ -632,7 +733,7 @@ export default function AdminDashboard() {
                   </h1>
                   <p className="mt-2 font-medium">
                     Manage products, inventory, store details, updates, brands,
-                    featured sneaker, and homepage content.
+                    featured sneaker, homepage content, and about page content.
                   </p>
                 </div>
 
@@ -1613,6 +1714,195 @@ export default function AdminDashboard() {
                     {isSavingHomepage
                       ? "Saving..."
                       : "Save Homepage Content"}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {activeSection === "about-content" && (
+              <div className="glow-pink border-4 border-black bg-white p-6">
+                <h2 className="mb-6 text-2xl font-black uppercase">
+                  About Content
+                </h2>
+
+                <form onSubmit={handleAboutContentSubmit} className="grid gap-5">
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Hero Small Label
+                    </label>
+                    <input
+                      type="text"
+                      name="heroKicker"
+                      value={aboutContent.heroKicker}
+                      onChange={handleAboutContentChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Hero Title
+                    </label>
+                    <input
+                      type="text"
+                      name="heroTitle"
+                      value={aboutContent.heroTitle}
+                      onChange={handleAboutContentChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Hero Description
+                    </label>
+                    <textarea
+                      name="heroDescription"
+                      value={aboutContent.heroDescription}
+                      onChange={handleAboutContentChange}
+                      rows="4"
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    ></textarea>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Story Section Title
+                    </label>
+                    <input
+                      type="text"
+                      name="storyTitle"
+                      value={aboutContent.storyTitle}
+                      onChange={handleAboutContentChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Story Paragraph One
+                    </label>
+                    <textarea
+                      name="storyParagraphOne"
+                      value={aboutContent.storyParagraphOne}
+                      onChange={handleAboutContentChange}
+                      rows="4"
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    ></textarea>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Story Paragraph Two
+                    </label>
+                    <textarea
+                      name="storyParagraphTwo"
+                      value={aboutContent.storyParagraphTwo}
+                      onChange={handleAboutContentChange}
+                      rows="4"
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    ></textarea>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Owner Section Title
+                    </label>
+                    <input
+                      type="text"
+                      name="ownerTitle"
+                      value={aboutContent.ownerTitle}
+                      onChange={handleAboutContentChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                    <div className="border-2 border-black p-4">
+                      <h4 className="mb-4 text-sm font-black uppercase">
+                        Bottom Card One
+                      </h4>
+                      <div className="grid gap-4">
+                        <input
+                          type="text"
+                          name="featureOneTitle"
+                          value={aboutContent.featureOneTitle}
+                          onChange={handleAboutContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="Multiple Brands"
+                        />
+                        <textarea
+                          name="featureOneDescription"
+                          value={aboutContent.featureOneDescription}
+                          onChange={handleAboutContentChange}
+                          rows="4"
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="Description"
+                        ></textarea>
+                      </div>
+                    </div>
+
+                    <div className="border-2 border-black p-4">
+                      <h4 className="mb-4 text-sm font-black uppercase">
+                        Bottom Card Two
+                      </h4>
+                      <div className="grid gap-4">
+                        <input
+                          type="text"
+                          name="featureTwoTitle"
+                          value={aboutContent.featureTwoTitle}
+                          onChange={handleAboutContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="New Arrivals"
+                        />
+                        <textarea
+                          name="featureTwoDescription"
+                          value={aboutContent.featureTwoDescription}
+                          onChange={handleAboutContentChange}
+                          rows="4"
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="Description"
+                        ></textarea>
+                      </div>
+                    </div>
+
+                    <div className="border-2 border-black p-4">
+                      <h4 className="mb-4 text-sm font-black uppercase">
+                        Bottom Card Three
+                      </h4>
+                      <div className="grid gap-4">
+                        <input
+                          type="text"
+                          name="featureThreeTitle"
+                          value={aboutContent.featureThreeTitle}
+                          onChange={handleAboutContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="Easy Inquiry"
+                        />
+                        <textarea
+                          name="featureThreeDescription"
+                          value={aboutContent.featureThreeDescription}
+                          onChange={handleAboutContentChange}
+                          rows="4"
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="Description"
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  {aboutMessage && (
+                    <p className="text-sm font-bold text-[#b60055]">
+                      {aboutMessage}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSavingAbout}
+                    className="w-fit border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSavingAbout ? "Saving..." : "Save About Content"}
                   </button>
                 </form>
               </div>
