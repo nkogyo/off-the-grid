@@ -12,7 +12,8 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "../../firebase/config";
+import { signOut } from "firebase/auth";
+import { db, auth } from "../../firebase/config";
 
 const initialFormData = {
   name: "",
@@ -118,6 +119,15 @@ export default function AdminDashboard() {
     fetchStoreInfo();
     fetchUpdates();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      window.location.href = "/admin/login";
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -378,10 +388,24 @@ export default function AdminDashboard() {
 
           <div className="space-y-8">
             <div className="glow-pink border-4 border-black bg-[#b60055] p-6 text-white">
-              <h1 className="text-4xl font-black uppercase">Admin Dashboard</h1>
-              <p className="mt-2 font-medium">
-                Manage products, inventory, business details, and updates.
-              </p>
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h1 className="text-4xl font-black uppercase">
+                    Admin Dashboard
+                  </h1>
+                  <p className="mt-2 font-medium">
+                    Manage products, inventory, business details, and updates.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-fit border-2 border-black bg-white px-4 py-2 font-black uppercase text-black hover:-translate-y-0.5 transition"
+                >
+                  Logout
+                </button>
+              </div>
             </div>
 
             {activeSection === "add-product" && (
