@@ -1,71 +1,100 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../components/layout/Layout";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+} from "firebase/firestore";
 import { db } from "../firebase/config";
 
 export default function Home() {
   const [updates, setUpdates] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [featuredSneaker, setFeaturedSneaker] = useState(null);
 
   useEffect(() => {
     const fetchUpdates = async () => {
-      try {
-        const updatesQuery = query(
-          collection(db, "updates"),
-          orderBy("createdAt", "desc")
-        );
-        const snapshot = await getDocs(updatesQuery);
-        const data = snapshot.docs.map((item) => ({
-          id: item.id,
-          ...item.data(),
-        }));
-        setUpdates(data.slice(0, 3));
-      } catch (error) {
-        console.error("Error fetching updates:", error);
-      }
+      const updatesQuery = query(
+        collection(db, "updates"),
+        orderBy("createdAt", "desc")
+      );
+      const snapshot = await getDocs(updatesQuery);
+      const data = snapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data(),
+      }));
+      setUpdates(data.slice(0, 3));
     };
 
     const fetchNewArrivals = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "products"));
-        const data = snapshot.docs
-          .map((item) => ({
-            id: item.id,
-            ...item.data(),
-          }))
-          .filter((product) => product.isNewArrival)
-          .slice(0, 4);
+      const snapshot = await getDocs(collection(db, "products"));
+      const data = snapshot.docs
+        .map((item) => ({
+          id: item.id,
+          ...item.data(),
+        }))
+        .filter((product) => product.isNewArrival)
+        .slice(0, 4);
 
-        setNewArrivals(data);
-      } catch (error) {
-        console.error("Error fetching new arrivals:", error);
-      }
+      setNewArrivals(data);
     };
 
     const fetchBrands = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "brands"));
-        const data = snapshot.docs.map((item) => ({
-          id: item.id,
-          ...item.data(),
-        }));
-        setBrands(data);
-      } catch (error) {
-        console.error("Error fetching brands:", error);
+      const snapshot = await getDocs(collection(db, "brands"));
+      const data = snapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data(),
+      }));
+      setBrands(data);
+    };
+
+    const fetchFeaturedSneaker = async () => {
+      const featuredRef = doc(db, "featuredProduct", "main");
+      const featuredSnap = await getDoc(featuredRef);
+
+      if (!featuredSnap.exists()) {
+        setFeaturedSneaker(null);
+        return;
+      }
+
+      const productId = featuredSnap.data().productId;
+
+      if (!productId) {
+        setFeaturedSneaker(null);
+        return;
+      }
+
+      const productRef = doc(db, "products", productId);
+      const productSnap = await getDoc(productRef);
+
+      if (productSnap.exists()) {
+        setFeaturedSneaker({
+          id: productSnap.id,
+          ...productSnap.data(),
+        });
+      } else {
+        setFeaturedSneaker(null);
       }
     };
 
     fetchUpdates();
     fetchNewArrivals();
     fetchBrands();
+    fetchFeaturedSneaker();
   }, []);
 
   return (
     <Layout>
+      {/* HERO */}
       <section className="px-6 py-10 md:px-10 lg:px-16">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-2">
+
+          {/* LEFT */}
           <div className="glow-green flex flex-col justify-center border-4 border-black bg-white p-8">
             <p className="mb-4 inline-block w-fit border-2 border-black bg-[#c1ff72] px-3 py-1 text-sm font-bold uppercase tracking-wide">
               New Drops Available
@@ -101,20 +130,33 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="glow-orange relative flex min-h-[420px] items-center justify-center border-4 border-black bg-[#ff6b57] p-6">
-            <div className="absolute left-4 top-4 border-2 border-black bg-white px-3 py-1 text-sm font-bold uppercase">
+          {/* RIGHT - FEATURED SNEAKER (IMAGE ONLY) */}
+          <div className="glow-orange relative min-h-[420px] border-4 border-black bg-[#ff6b57] p-6">
+            <div className="absolute left-4 top-4 z-10 border-2 border-black bg-white px-3 py-1 text-sm font-bold uppercase">
               Featured Sneaker
             </div>
 
-            <img
-              src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1000&q=80"
-              alt="Featured sneaker"
-              className="h-[320px] w-full max-w-[520px] object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.35)]"
-            />
+            {featuredSneaker ? (
+              <Link
+                to={`/product/${featuredSneaker.id}`}
+                className="flex h-full min-h-[420px] items-center justify-center"
+              >
+                <img
+                  src={`${featuredSneaker.image}?auto=format&fit=crop&w=1000&q=80`}
+                  alt={featuredSneaker.name}
+                  className="h-[320px] w-full max-w-[520px] object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.35)] transition duration-300 hover:scale-105 hover:rotate-1"
+                />
+              </Link>
+            ) : (
+              <div className="flex min-h-[420px] items-center justify-center text-center font-black uppercase text-white">
+                No featured sneaker selected yet
+              </div>
+            )}
           </div>
         </div>
       </section>
 
+      {/* BRANDS */}
       <section className="px-6 py-10 md:px-10 lg:px-16">
         <div className="glow-pink mx-auto max-w-7xl border-4 border-black bg-white p-6">
           <h2 className="mb-6 text-2xl font-black uppercase">
@@ -141,6 +183,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* NEW ARRIVALS */}
       <section className="px-6 py-10 md:px-10 lg:px-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-6 flex items-center justify-between">
@@ -195,13 +238,12 @@ export default function Home() {
         </div>
       </section>
 
+      {/* UPDATES */}
       <section className="px-6 py-10 md:px-10 lg:px-16">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-black uppercase">
-              Latest Updates
-            </h2>
-          </div>
+          <h2 className="mb-6 text-2xl font-black uppercase">
+            Latest Updates
+          </h2>
 
           <div className="grid gap-6 md:grid-cols-3">
             {updates.length === 0 ? (

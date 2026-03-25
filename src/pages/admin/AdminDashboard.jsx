@@ -66,6 +66,10 @@ export default function AdminDashboard() {
   const [brandMessage, setBrandMessage] = useState("");
   const [isSavingBrand, setIsSavingBrand] = useState(false);
 
+  const [featuredProductId, setFeaturedProductId] = useState("");
+  const [featuredMessage, setFeaturedMessage] = useState("");
+  const [isSavingFeatured, setIsSavingFeatured] = useState(false);
+
   const fetchProducts = async () => {
     try {
       const snapshot = await getDocs(collection(db, "products"));
@@ -133,11 +137,28 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchFeaturedProduct = async () => {
+    try {
+      const featuredRef = doc(db, "featuredProduct", "main");
+      const featuredSnap = await getDoc(featuredRef);
+
+      if (featuredSnap.exists()) {
+        setFeaturedProductId(featuredSnap.data().productId || "");
+      } else {
+        setFeaturedProductId("");
+      }
+    } catch (error) {
+      console.error("Error fetching featured product:", error);
+      setFeaturedMessage("Failed to load featured sneaker.");
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchStoreInfo();
     fetchUpdates();
     fetchBrands();
+    fetchFeaturedProduct();
   }, []);
 
   const handleLogout = async () => {
@@ -422,6 +443,29 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleFeaturedSneakerSubmit = async (e) => {
+    e.preventDefault();
+    setFeaturedMessage("");
+
+    if (!featuredProductId) {
+      setFeaturedMessage("Please select a product.");
+      return;
+    }
+
+    try {
+      setIsSavingFeatured(true);
+      await setDoc(doc(db, "featuredProduct", "main"), {
+        productId: featuredProductId,
+      });
+      setFeaturedMessage("Featured sneaker saved successfully.");
+    } catch (error) {
+      console.error("Error saving featured sneaker:", error);
+      setFeaturedMessage("Failed to save featured sneaker.");
+    } finally {
+      setIsSavingFeatured(false);
+    }
+  };
+
   const renderSidebarButton = (id, label) => {
     const isActive = activeSection === id;
 
@@ -438,6 +482,10 @@ export default function AdminDashboard() {
     );
   };
 
+  const currentFeaturedProduct = products.find(
+    (product) => product.id === featuredProductId
+  );
+
   return (
     <Layout>
       <section className="px-6 py-10 md:px-10 lg:px-16">
@@ -445,7 +493,7 @@ export default function AdminDashboard() {
           <aside className="glow-pink border-4 border-black bg-white p-6">
             <h2 className="text-2xl font-black uppercase">Admin Panel</h2>
             <p className="mt-2 text-sm font-medium text-gray-600">
-              Manage products, updates, store details, and brands.
+              Manage products, updates, store details, brands, and featured sneaker.
             </p>
 
             <div className="mt-8 space-y-3">
@@ -454,6 +502,7 @@ export default function AdminDashboard() {
               {renderSidebarButton("store-info", "Store Info")}
               {renderSidebarButton("updates", "Updates")}
               {renderSidebarButton("brands", "Brands")}
+              {renderSidebarButton("featured-sneaker", "Featured Sneaker")}
             </div>
           </aside>
 
@@ -465,7 +514,7 @@ export default function AdminDashboard() {
                     Admin Dashboard
                   </h1>
                   <p className="mt-2 font-medium">
-                    Manage products, inventory, store details, updates, and brands.
+                    Manage products, inventory, store details, updates, brands, and featured sneaker.
                   </p>
                 </div>
 
@@ -1012,6 +1061,78 @@ export default function AdminDashboard() {
                         </button>
                       </div>
                     ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeSection === "featured-sneaker" && (
+              <div className="glow-pink border-4 border-black bg-white p-6">
+                <h2 className="mb-6 text-2xl font-black uppercase">
+                  Featured Sneaker
+                </h2>
+
+                <form onSubmit={handleFeaturedSneakerSubmit} className="grid gap-5">
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Select Product
+                    </label>
+                    <select
+                      value={featuredProductId}
+                      onChange={(e) => setFeaturedProductId(e.target.value)}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    >
+                      <option value="">Select a product</option>
+                      {products.map((product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.name} - {product.brand}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {featuredMessage && (
+                    <p className="text-sm font-bold text-[#b60055]">
+                      {featuredMessage}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSavingFeatured}
+                    className="w-fit border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSavingFeatured ? "Saving..." : "Save Featured Sneaker"}
+                  </button>
+                </form>
+
+                <div className="mt-8">
+                  <h3 className="mb-4 text-xl font-black uppercase">
+                    Current Featured Sneaker
+                  </h3>
+
+                  {currentFeaturedProduct ? (
+                    <div className="max-w-md border-2 border-black bg-[#f8f3e8] p-4">
+                      <img
+                        src={currentFeaturedProduct.image}
+                        alt={currentFeaturedProduct.name}
+                        className="h-56 w-full object-contain"
+                      />
+
+                      <h4 className="mt-4 text-lg font-black uppercase">
+                        {currentFeaturedProduct.name}
+                      </h4>
+
+                      <p className="text-sm font-medium text-gray-600">
+                        {currentFeaturedProduct.brand}
+                      </p>
+
+                      <p className="mt-2 font-bold text-[#b60055]">
+                        ₱{Number(currentFeaturedProduct.price).toLocaleString()}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No featured sneaker selected yet.</p>
                   )}
                 </div>
               </div>
