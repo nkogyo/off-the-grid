@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import Layout from "../components/layout/Layout";
 import { db } from "../firebase/config";
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState("");
@@ -38,6 +39,22 @@ export default function ProductDetails() {
 
     fetchProduct();
   }, [id]);
+
+  const handleCheckAvailability = () => {
+    if (!product) return;
+
+    const params = new URLSearchParams({
+      productId: product.id || "",
+      productName: product.name || "",
+      brand: product.brand || "",
+      price: product.price ? `₱${Number(product.price).toLocaleString()}` : "",
+      sizes: product.sizes?.length ? product.sizes.join(", ") : "",
+      image: product.image || "",
+      source: "product-details",
+    });
+
+    navigate(`/contact?${params.toString()}`);
+  };
 
   if (loading) {
     return (
@@ -148,6 +165,7 @@ export default function ProductDetails() {
                   product.sizes.map((size) => (
                     <button
                       key={size}
+                      type="button"
                       className="border-2 border-black px-4 py-2 font-bold transition hover:bg-black hover:text-white"
                     >
                       {size}
@@ -160,7 +178,11 @@ export default function ProductDetails() {
             </div>
 
             <div className="mt-10 flex gap-4">
-              <button className="border-4 border-black bg-black px-6 py-3 font-bold text-white transition hover:-translate-y-1">
+              <button
+                type="button"
+                onClick={handleCheckAvailability}
+                className="border-4 border-black bg-black px-6 py-3 font-bold text-white transition hover:-translate-y-1"
+              >
                 Check Availability
               </button>
 

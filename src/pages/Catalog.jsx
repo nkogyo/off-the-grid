@@ -1,18 +1,32 @@
 import { useMemo, useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 
-const brands = ["All", "Nike", "Adidas", "Puma"];
+const defaultBrands = ["All", "Nike", "Adidas", "Puma", "New Balance"];
 const sizes = [7, 8, 9, 10, 11];
 
 export default function Catalog() {
+  const [searchParams] = useSearchParams();
+  const initialBrand = searchParams.get("brand");
+
   const [products, setProducts] = useState([]);
-  const [selectedBrand, setSelectedBrand] = useState("All");
+  const [brandOptions, setBrandOptions] = useState(defaultBrands);
+  const [selectedBrand, setSelectedBrand] = useState(
+    initialBrand || "All"
+  );
   const [selectedSize, setSelectedSize] = useState(null);
 
-  // ✅ FETCH FROM FIREBASE
+  useEffect(() => {
+    const brandFromUrl = searchParams.get("brand");
+    if (brandFromUrl) {
+      setSelectedBrand(brandFromUrl);
+    } else {
+      setSelectedBrand("All");
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     const fetchProducts = async () => {
       const snapshot = await getDocs(collection(db, "products"));
@@ -25,17 +39,28 @@ export default function Catalog() {
       setProducts(data);
     };
 
+    const fetchBrands = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "brands"));
+        const fetchedBrands = snapshot.docs.map((doc) => doc.data().name);
+        setBrandOptions(["All", ...fetchedBrands]);
+      } catch (error) {
+        console.error("Error fetching brands:", error);
+        setBrandOptions(defaultBrands);
+      }
+    };
+
     fetchProducts();
+    fetchBrands();
   }, []);
 
-  // ✅ FILTER
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const brandMatch =
         selectedBrand === "All" || product.brand === selectedBrand;
 
       const sizeMatch =
-        selectedSize === null || product.sizes.includes(selectedSize);
+        selectedSize === null || product.sizes?.includes(selectedSize);
 
       return brandMatch && sizeMatch;
     });
@@ -49,7 +74,7 @@ export default function Catalog() {
             <h3 className="mb-4 font-black uppercase">Brands</h3>
 
             <div className="mb-6 flex flex-wrap gap-2">
-              {brands.map((brand) => (
+              {brandOptions.map((brand) => (
                 <button
                   key={brand}
                   onClick={() => setSelectedBrand(brand)}
@@ -104,6 +129,12 @@ export default function Catalog() {
                     {product.tag && (
                       <div className="absolute right-0 top-0 border-b-2 border-l-2 border-black bg-[#b60055] px-2 py-1 text-xs font-bold text-white">
                         {product.tag}
+                      </div>
+                    )}
+
+                    {product.isNewArrival && (
+                      <div className="absolute left-0 top-0 border-b-2 border-r-2 border-black bg-[#c1ff72] px-2 py-1 text-xs font-bold uppercase text-black">
+                        New
                       </div>
                     )}
 
