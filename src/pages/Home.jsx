@@ -90,11 +90,8 @@ export default function Home() {
 
   return (
     <Layout>
-      {/* HERO */}
       <section className="px-6 py-10 md:px-10 lg:px-16">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-2">
-
-          {/* LEFT */}
           <div className="glow-green flex flex-col justify-center border-4 border-black bg-white p-8">
             <p className="mb-4 inline-block w-fit border-2 border-black bg-[#c1ff72] px-3 py-1 text-sm font-bold uppercase tracking-wide">
               New Drops Available
@@ -109,8 +106,9 @@ export default function Home() {
             </h1>
 
             <p className="mt-6 max-w-xl text-base font-medium leading-7 md:text-lg">
-              Discover branded shoes and sneakers in one place. Browse new arrivals,
-              featured pairs, and stylish everyday picks from your favorite labels.
+              Discover branded shoes and sneakers in one place. Browse new
+              arrivals, featured pairs, and stylish everyday picks from your
+              favorite labels.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
@@ -130,7 +128,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* RIGHT - FEATURED SNEAKER (IMAGE ONLY) */}
           <div className="glow-orange relative min-h-[420px] border-4 border-black bg-[#ff6b57] p-6">
             <div className="absolute left-4 top-4 z-10 border-2 border-black bg-white px-3 py-1 text-sm font-bold uppercase">
               Featured Sneaker
@@ -144,7 +141,7 @@ export default function Home() {
                 <img
                   src={`${featuredSneaker.image}?auto=format&fit=crop&w=1000&q=80`}
                   alt={featuredSneaker.name}
-                  className="h-[320px] w-full max-w-[520px] object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.35)] transition duration-300 hover:scale-105 hover:rotate-1"
+                  className="h-[320px] w-full max-w-[520px] object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.35)] transition duration-300 hover:rotate-1 hover:scale-105"
                 />
               </Link>
             ) : (
@@ -156,7 +153,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* BRANDS */}
       <section className="px-6 py-10 md:px-10 lg:px-16">
         <div className="glow-pink mx-auto max-w-7xl border-4 border-black bg-white p-6">
           <h2 className="mb-6 text-2xl font-black uppercase">
@@ -173,7 +169,7 @@ export default function Home() {
                 <Link
                   key={brand.id}
                   to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
-                  className="glow-hover border-2 border-black px-5 py-2 font-black uppercase hover:bg-black hover:text-white transition"
+                  className="glow-hover border-2 border-black px-5 py-2 font-black uppercase transition hover:bg-black hover:text-white"
                 >
                   {brand.name}
                 </Link>
@@ -183,13 +179,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* NEW ARRIVALS */}
       <section className="px-6 py-10 md:px-10 lg:px-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-black uppercase">
-              New Arrivals
-            </h2>
+            <h2 className="text-2xl font-black uppercase">New Arrivals</h2>
 
             <Link to="/catalog" className="font-bold underline">
               View All
@@ -224,9 +217,7 @@ export default function Home() {
                     {product.name}
                   </h3>
 
-                  <p className="text-sm font-medium">
-                    {product.brand}
-                  </p>
+                  <p className="text-sm font-medium">{product.brand}</p>
 
                   <p className="mt-2 font-bold text-[#b60055]">
                     ₱{Number(product.price).toLocaleString()}
@@ -238,12 +229,15 @@ export default function Home() {
         </div>
       </section>
 
-      {/* UPDATES */}
       <section className="px-6 py-10 md:px-10 lg:px-16">
         <div className="mx-auto max-w-7xl">
-          <h2 className="mb-6 text-2xl font-black uppercase">
-            Latest Updates
-          </h2>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-black uppercase">Latest Updates</h2>
+
+            <Link to="/updates" className="font-bold underline">
+              View All Updates
+            </Link>
+          </div>
 
           <div className="grid gap-6 md:grid-cols-3">
             {updates.length === 0 ? (
@@ -252,9 +246,10 @@ export default function Home() {
               </div>
             ) : (
               updates.map((item) => (
-                <div
+                <Link
+                  to="/updates"
                   key={item.id}
-                  className="glow-hover border-4 border-black bg-white p-4"
+                  className="glow-hover block border-4 border-black bg-white p-4"
                 >
                   {item.image && (
                     <img
@@ -264,14 +259,12 @@ export default function Home() {
                     />
                   )}
 
-                  <h3 className="text-xl font-black uppercase">
-                    {item.title}
-                  </h3>
+                  <h3 className="text-xl font-black uppercase">{item.title}</h3>
 
                   <p className="mt-3 text-sm leading-6 text-gray-700">
                     {item.content}
                   </p>
-                </div>
+                </Link>
               ))
             )}
           </div>

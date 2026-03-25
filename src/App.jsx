@@ -4,6 +4,7 @@ import Catalog from "./pages/Catalog";
 import ProductDetails from "./pages/ProductDetails";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Updates from "./pages/Updates";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -16,6 +17,7 @@ export default function App() {
       <Route path="/product/:id" element={<ProductDetails />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/updates" element={<Updates />} />
 
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route
