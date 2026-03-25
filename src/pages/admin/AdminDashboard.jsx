@@ -21,6 +21,9 @@ const initialFormData = {
   price: "",
   sizes: "",
   image: "",
+  subImage1: "",
+  subImage2: "",
+  subImage3: "",
   description: "",
   tag: "",
   isNewArrival: false,
@@ -41,6 +44,54 @@ const initialUpdateForm = {
   title: "",
   content: "",
   image: "",
+};
+
+const initialHomepageContent = {
+  heroKicker: "System Protocol 01",
+  heroTitleLine1: "Neon",
+  heroTitleLine2: "Velocity",
+  heroDescription:
+    "Engineered with kinetic air technology for the urban marathon. The future of culture starts at ground level.",
+  heroPrimaryButtonText: "Shop The Drop",
+  heroPrimaryButtonLink: "/catalog",
+  heroSecondaryButtonText: "Specifications",
+  heroSecondaryButtonLink: "/updates",
+  promoKicker: "Upcoming Data Drop",
+  promoTitle: "Hyper-Sonic X",
+  promoDays: "04",
+  promoHours: "12",
+  promoMinutes: "55",
+  labSeriesTitle: "The Lab Series",
+  labSeriesKicker: "Access Protocol",
+  promoImageUrl: "",
+  promoTileOneIcon: "◉",
+  promoTileOneTitle: "Global Network",
+  promoTileTwoIcon: "◎",
+  promoTileTwoTitle: "Verified Authentic",
+  promoTileThreeIcon: "▲",
+  promoTileThreeTitle: "Engineered Motion",
+};
+
+const initialAboutContent = {
+  heroKicker: "About the Store",
+  heroTitle: "Off The Grid",
+  heroDescription:
+    "Off The Grid is a shoe and sneaker retailer focused on showcasing stylish, branded, and newly released footwear. The store highlights strong visual presentation, curated collections, and easy access to product information so customers can browse with confidence.",
+  storyTitle: "Our Story",
+  storyParagraphOne:
+    "What started as a simple sneaker retail concept grew into a product showcase platform where customers can explore different brands, compare styles, and keep up with new arrivals.",
+  storyParagraphTwo:
+    "The goal of the platform is not only to display inventory, but also to help attract more buyers through a clean, bold, and visually engaging website experience.",
+  ownerTitle: "Owner",
+  featureOneTitle: "Multiple Brands",
+  featureOneDescription:
+    "Browse shoes and sneakers from well-known local and global brands in one place.",
+  featureTwoTitle: "New Arrivals",
+  featureTwoDescription:
+    "Stay updated with newly released and newly added products in the catalog.",
+  featureThreeTitle: "Easy Inquiry",
+  featureThreeDescription:
+    "Customers can quickly view contact details and ask about availability or store visits.",
 };
 
 export default function AdminDashboard() {
@@ -69,6 +120,17 @@ export default function AdminDashboard() {
   const [featuredProductId, setFeaturedProductId] = useState("");
   const [featuredMessage, setFeaturedMessage] = useState("");
   const [isSavingFeatured, setIsSavingFeatured] = useState(false);
+
+  const [homepageContent, setHomepageContent] = useState(initialHomepageContent);
+  const [homepageMessage, setHomepageMessage] = useState("");
+  const [isSavingHomepage, setIsSavingHomepage] = useState(false);
+
+  const [aboutContent, setAboutContent] = useState(initialAboutContent);
+  const [aboutMessage, setAboutMessage] = useState("");
+  const [isSavingAbout, setIsSavingAbout] = useState(false);
+
+  const [inquiries, setInquiries] = useState([]);
+  const [inquiriesMessage, setInquiriesMessage] = useState("");
 
   const fetchProducts = async () => {
     try {
@@ -153,12 +215,76 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchHomepageContent = async () => {
+    try {
+      setHomepageMessage("");
+      const homepageRef = doc(db, "homepageContent", "main");
+      const homepageSnap = await getDoc(homepageRef);
+
+      if (homepageSnap.exists()) {
+        setHomepageContent((prev) => ({
+          ...prev,
+          ...homepageSnap.data(),
+        }));
+      } else {
+        await setDoc(homepageRef, initialHomepageContent);
+        setHomepageContent(initialHomepageContent);
+      }
+    } catch (error) {
+      console.error("Error fetching homepage content:", error);
+      setHomepageMessage("Failed to load homepage content.");
+    }
+  };
+
+  const fetchAboutContent = async () => {
+    try {
+      setAboutMessage("");
+      const aboutRef = doc(db, "aboutContent", "main");
+      const aboutSnap = await getDoc(aboutRef);
+
+      if (aboutSnap.exists()) {
+        setAboutContent((prev) => ({
+          ...prev,
+          ...aboutSnap.data(),
+        }));
+      } else {
+        await setDoc(aboutRef, initialAboutContent);
+        setAboutContent(initialAboutContent);
+      }
+    } catch (error) {
+      console.error("Error fetching about content:", error);
+      setAboutMessage("Failed to load about page content.");
+    }
+  };
+
+  const fetchInquiries = async () => {
+    try {
+      setInquiriesMessage("");
+      const inquiriesQuery = query(
+        collection(db, "contactMessages"),
+        orderBy("createdAt", "desc")
+      );
+      const snapshot = await getDocs(inquiriesQuery);
+      const data = snapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data(),
+      }));
+      setInquiries(data);
+    } catch (error) {
+      console.error("Error fetching inquiries:", error);
+      setInquiriesMessage("Failed to load inquiries.");
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchStoreInfo();
     fetchUpdates();
     fetchBrands();
     fetchFeaturedProduct();
+    fetchHomepageContent();
+    fetchAboutContent();
+    fetchInquiries();
   }, []);
 
   const handleLogout = async () => {
@@ -188,6 +314,16 @@ export default function AdminDashboard() {
       .split(",")
       .map((size) => Number(size.trim()))
       .filter((size) => !Number.isNaN(size));
+  };
+
+  const buildImagesPayload = () => {
+    const subImages = [
+      formData.subImage1.trim(),
+      formData.subImage2.trim(),
+      formData.subImage3.trim(),
+    ].filter(Boolean);
+
+    return subImages;
   };
 
   const handleSubmit = async (e) => {
@@ -225,6 +361,7 @@ export default function AdminDashboard() {
       price: Number(formData.price),
       sizes: parsedSizes,
       image: trimmedImage,
+      images: buildImagesPayload(),
       description: trimmedDescription,
       tag: trimmedTag,
       isNewArrival: Boolean(formData.isNewArrival),
@@ -253,6 +390,7 @@ export default function AdminDashboard() {
   };
 
   const handleEdit = (product) => {
+    const subImages = Array.isArray(product.images) ? product.images : [];
     setEditingProductId(product.id);
     setFormData({
       name: product.name || "",
@@ -260,6 +398,9 @@ export default function AdminDashboard() {
       price: product.price ?? "",
       sizes: Array.isArray(product.sizes) ? product.sizes.join(",") : "",
       image: product.image || "",
+      subImage1: subImages[0] || "",
+      subImage2: subImages[1] || "",
+      subImage3: subImages[2] || "",
       description: product.description || "",
       tag: product.tag || "",
       isNewArrival: Boolean(product.isNewArrival),
@@ -466,6 +607,99 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleHomepageContentChange = (e) => {
+    const { name, value } = e.target;
+    setHomepageContent((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleHomepageContentSubmit = async (e) => {
+    e.preventDefault();
+    setHomepageMessage("");
+
+    try {
+      setIsSavingHomepage(true);
+
+      const payload = {
+        heroKicker: homepageContent.heroKicker.trim(),
+        heroTitleLine1: homepageContent.heroTitleLine1.trim(),
+        heroTitleLine2: homepageContent.heroTitleLine2.trim(),
+        heroDescription: homepageContent.heroDescription.trim(),
+        heroPrimaryButtonText: homepageContent.heroPrimaryButtonText.trim(),
+        heroPrimaryButtonLink: homepageContent.heroPrimaryButtonLink.trim(),
+        heroSecondaryButtonText: homepageContent.heroSecondaryButtonText.trim(),
+        heroSecondaryButtonLink: homepageContent.heroSecondaryButtonLink.trim(),
+        promoKicker: homepageContent.promoKicker.trim(),
+        promoTitle: homepageContent.promoTitle.trim(),
+        promoDays: homepageContent.promoDays.trim(),
+        promoHours: homepageContent.promoHours.trim(),
+        promoMinutes: homepageContent.promoMinutes.trim(),
+        labSeriesTitle: homepageContent.labSeriesTitle.trim(),
+        labSeriesKicker: homepageContent.labSeriesKicker.trim(),
+        promoImageUrl: homepageContent.promoImageUrl.trim(),
+        promoTileOneIcon: homepageContent.promoTileOneIcon.trim(),
+        promoTileOneTitle: homepageContent.promoTileOneTitle.trim(),
+        promoTileTwoIcon: homepageContent.promoTileTwoIcon.trim(),
+        promoTileTwoTitle: homepageContent.promoTileTwoTitle.trim(),
+        promoTileThreeIcon: homepageContent.promoTileThreeIcon.trim(),
+        promoTileThreeTitle: homepageContent.promoTileThreeTitle.trim(),
+      };
+
+      await setDoc(doc(db, "homepageContent", "main"), payload);
+      setHomepageContent(payload);
+      setHomepageMessage("Homepage content saved successfully.");
+    } catch (error) {
+      console.error("Error saving homepage content:", error);
+      setHomepageMessage("Failed to save homepage content.");
+    } finally {
+      setIsSavingHomepage(false);
+    }
+  };
+
+  const handleAboutContentChange = (e) => {
+    const { name, value } = e.target;
+    setAboutContent((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleAboutContentSubmit = async (e) => {
+    e.preventDefault();
+    setAboutMessage("");
+
+    try {
+      setIsSavingAbout(true);
+
+      const payload = {
+        heroKicker: aboutContent.heroKicker.trim(),
+        heroTitle: aboutContent.heroTitle.trim(),
+        heroDescription: aboutContent.heroDescription.trim(),
+        storyTitle: aboutContent.storyTitle.trim(),
+        storyParagraphOne: aboutContent.storyParagraphOne.trim(),
+        storyParagraphTwo: aboutContent.storyParagraphTwo.trim(),
+        ownerTitle: aboutContent.ownerTitle.trim(),
+        featureOneTitle: aboutContent.featureOneTitle.trim(),
+        featureOneDescription: aboutContent.featureOneDescription.trim(),
+        featureTwoTitle: aboutContent.featureTwoTitle.trim(),
+        featureTwoDescription: aboutContent.featureTwoDescription.trim(),
+        featureThreeTitle: aboutContent.featureThreeTitle.trim(),
+        featureThreeDescription: aboutContent.featureThreeDescription.trim(),
+      };
+
+      await setDoc(doc(db, "aboutContent", "main"), payload);
+      setAboutContent(payload);
+      setAboutMessage("About page content saved successfully.");
+    } catch (error) {
+      console.error("Error saving about content:", error);
+      setAboutMessage("Failed to save about page content.");
+    } finally {
+      setIsSavingAbout(false);
+    }
+  };
+
   const renderSidebarButton = (id, label) => {
     const isActive = activeSection === id;
 
@@ -474,7 +708,9 @@ export default function AdminDashboard() {
         type="button"
         onClick={() => setActiveSection(id)}
         className={`w-full border-2 border-black px-4 py-3 text-left font-bold uppercase transition ${
-          isActive ? "bg-[#b60055] text-white" : "bg-white hover:-translate-y-0.5"
+          isActive
+            ? "bg-[#b60055] text-white"
+            : "bg-white hover:-translate-y-0.5"
         }`}
       >
         {label}
@@ -493,16 +729,19 @@ export default function AdminDashboard() {
           <aside className="glow-pink border-4 border-black bg-white p-6">
             <h2 className="text-2xl font-black uppercase">Admin Panel</h2>
             <p className="mt-2 text-sm font-medium text-gray-600">
-              Manage products, updates, store details, brands, and featured sneaker.
+              Manage products, content, and customer inquiries.
             </p>
 
             <div className="mt-8 space-y-3">
               {renderSidebarButton("add-product", "Add Product")}
               {renderSidebarButton("inventory", "Inventory")}
+              {renderSidebarButton("inquiries", "Inquiries")}
               {renderSidebarButton("store-info", "Store Info")}
               {renderSidebarButton("updates", "Updates")}
               {renderSidebarButton("brands", "Brands")}
               {renderSidebarButton("featured-sneaker", "Featured Sneaker")}
+              {renderSidebarButton("homepage-content", "Homepage Content")}
+              {renderSidebarButton("about-content", "About Content")}
             </div>
           </aside>
 
@@ -514,7 +753,7 @@ export default function AdminDashboard() {
                     Admin Dashboard
                   </h1>
                   <p className="mt-2 font-medium">
-                    Manage products, inventory, store details, updates, brands, and featured sneaker.
+                    Manage products, inventory, content, and inquiries.
                   </p>
                 </div>
 
@@ -601,13 +840,13 @@ export default function AdminDashboard() {
                       value={formData.sizes}
                       onChange={handleChange}
                       className="w-full border-2 border-black px-4 py-3 outline-none"
-                      placeholder="Example: 7,8,9,10"
+                      placeholder="Example: 7,8,9,10 or 89"
                     />
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm font-black uppercase">
-                      Image URL
+                      Main Image URL
                     </label>
                     <input
                       type="text"
@@ -615,7 +854,40 @@ export default function AdminDashboard() {
                       value={formData.image}
                       onChange={handleChange}
                       className="w-full border-2 border-black px-4 py-3 outline-none"
-                      placeholder="Paste product image URL"
+                      placeholder="Main product image URL"
+                    />
+                  </div>
+
+                  <div className="grid gap-4">
+                    <h3 className="text-sm font-black uppercase">
+                      Sub Images (up to 3)
+                    </h3>
+
+                    <input
+                      type="text"
+                      name="subImage1"
+                      value={formData.subImage1}
+                      onChange={handleChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                      placeholder="Sub image URL 1"
+                    />
+
+                    <input
+                      type="text"
+                      name="subImage2"
+                      value={formData.subImage2}
+                      onChange={handleChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                      placeholder="Sub image URL 2"
+                    />
+
+                    <input
+                      type="text"
+                      name="subImage3"
+                      value={formData.subImage3}
+                      onChange={handleChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                      placeholder="Sub image URL 3"
                     />
                   </div>
 
@@ -659,7 +931,9 @@ export default function AdminDashboard() {
                   </label>
 
                   {message && (
-                    <p className="text-sm font-bold text-[#b60055]">{message}</p>
+                    <p className="text-sm font-bold text-[#b60055]">
+                      {message}
+                    </p>
                   )}
 
                   <button
@@ -718,6 +992,10 @@ export default function AdminDashboard() {
                             <p className="mt-2 font-bold text-[#b60055]">
                               ₱{Number(product.price).toLocaleString()}
                             </p>
+                            <p className="mt-2 text-sm text-gray-600">
+                              Main image: {product.image ? "Yes" : "No"} | Sub
+                              images: {Array.isArray(product.images) ? product.images.length : 0}
+                            </p>
                           </div>
                         </div>
 
@@ -732,7 +1010,9 @@ export default function AdminDashboard() {
 
                           <button
                             type="button"
-                            onClick={() => handleDelete(product.id, product.name)}
+                            onClick={() =>
+                              handleDelete(product.id, product.name)
+                            }
                             className="border-2 border-black bg-black px-4 py-2 text-sm font-black uppercase text-white hover:-translate-y-0.5 transition"
                           >
                             Delete
@@ -755,9 +1035,102 @@ export default function AdminDashboard() {
               </div>
             )}
 
+            {activeSection === "inquiries" && (
+              <div className="glow-pink border-4 border-black bg-white p-6">
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <h2 className="text-2xl font-black uppercase">
+                    Customer Inquiries
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={fetchInquiries}
+                    className="border-2 border-black bg-white px-4 py-2 text-sm font-black uppercase hover:-translate-y-0.5 transition"
+                  >
+                    Refresh
+                  </button>
+                </div>
+
+                {inquiriesMessage && (
+                  <p className="mb-4 text-sm font-bold text-[#b60055]">
+                    {inquiriesMessage}
+                  </p>
+                )}
+
+                <div className="space-y-4">
+                  {inquiries.length === 0 ? (
+                    <p className="text-gray-600">No inquiries yet.</p>
+                  ) : (
+                    inquiries.map((item) => (
+                      <div
+                        key={item.id}
+                        className="border-2 border-black bg-[#f8f3e8] p-4"
+                      >
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Name
+                            </p>
+                            <p className="font-bold">{item.name || "N/A"}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Email
+                            </p>
+                            <p className="font-bold break-all">
+                              {item.email || "N/A"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Product
+                            </p>
+                            <p className="font-bold">{item.productName || "N/A"}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Chosen Size
+                            </p>
+                            <p className="font-bold">{item.sizes || "N/A"}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Brand
+                            </p>
+                            <p className="font-bold">{item.brand || "N/A"}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Price
+                            </p>
+                            <p className="font-bold">{item.price || "N/A"}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <p className="text-xs font-black uppercase text-gray-500">
+                            Message
+                          </p>
+                          <p className="mt-1 whitespace-pre-line text-gray-700">
+                            {item.message || "No message"}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
             {activeSection === "store-info" && (
               <div className="glow-pink border-4 border-black bg-white p-6">
-                <h2 className="mb-6 text-2xl font-black uppercase">Store Info</h2>
+                <h2 className="mb-6 text-2xl font-black uppercase">
+                  Store Info
+                </h2>
 
                 <form onSubmit={handleStoreInfoSubmit} className="grid gap-5">
                   <div>
@@ -997,7 +1370,9 @@ export default function AdminDashboard() {
                           <div className="mt-4">
                             <button
                               type="button"
-                              onClick={() => handleDeleteUpdate(item.id, item.title)}
+                              onClick={() =>
+                                handleDeleteUpdate(item.id, item.title)
+                              }
                               className="border-2 border-black bg-black px-4 py-2 text-sm font-black uppercase text-white hover:-translate-y-0.5 transition"
                             >
                               Delete Update
@@ -1017,7 +1392,10 @@ export default function AdminDashboard() {
                   Manage Brands
                 </h2>
 
-                <form onSubmit={handleBrandSubmit} className="mb-6 flex flex-col gap-4 md:flex-row">
+                <form
+                  onSubmit={handleBrandSubmit}
+                  className="mb-6 flex flex-col gap-4 md:flex-row"
+                >
                   <input
                     type="text"
                     value={brandName}
@@ -1050,11 +1428,15 @@ export default function AdminDashboard() {
                         key={brand.id}
                         className="flex items-center gap-2 border-2 border-black bg-[#f8f3e8] px-4 py-2"
                       >
-                        <span className="font-bold uppercase">{brand.name}</span>
+                        <span className="font-bold uppercase">
+                          {brand.name}
+                        </span>
 
                         <button
                           type="button"
-                          onClick={() => handleDeleteBrand(brand.id, brand.name)}
+                          onClick={() =>
+                            handleDeleteBrand(brand.id, brand.name)
+                          }
                           className="border border-black bg-black px-2 py-1 text-xs font-bold uppercase text-white"
                         >
                           X
@@ -1072,7 +1454,10 @@ export default function AdminDashboard() {
                   Featured Sneaker
                 </h2>
 
-                <form onSubmit={handleFeaturedSneakerSubmit} className="grid gap-5">
+                <form
+                  onSubmit={handleFeaturedSneakerSubmit}
+                  className="grid gap-5"
+                >
                   <div>
                     <label className="mb-2 block text-sm font-black uppercase">
                       Select Product
@@ -1102,7 +1487,9 @@ export default function AdminDashboard() {
                     disabled={isSavingFeatured}
                     className="w-fit border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isSavingFeatured ? "Saving..." : "Save Featured Sneaker"}
+                    {isSavingFeatured
+                      ? "Saving..."
+                      : "Save Featured Sneaker"}
                   </button>
                 </form>
 
@@ -1128,13 +1515,544 @@ export default function AdminDashboard() {
                       </p>
 
                       <p className="mt-2 font-bold text-[#b60055]">
-                        ₱{Number(currentFeaturedProduct.price).toLocaleString()}
+                        ₱{Number(
+                          currentFeaturedProduct.price
+                        ).toLocaleString()}
                       </p>
                     </div>
                   ) : (
-                    <p className="text-gray-600">No featured sneaker selected yet.</p>
+                    <p className="text-gray-600">
+                      No featured sneaker selected yet.
+                    </p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {activeSection === "homepage-content" && (
+              <div className="glow-pink border-4 border-black bg-white p-6">
+                <h2 className="mb-6 text-2xl font-black uppercase">
+                  Homepage Content
+                </h2>
+
+                <form
+                  onSubmit={handleHomepageContentSubmit}
+                  className="grid gap-8"
+                >
+                  <div className="grid gap-5">
+                    <h3 className="text-xl font-black uppercase">
+                      Neon Velocity Section
+                    </h3>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-black uppercase">
+                        Small Label
+                      </label>
+                      <input
+                        type="text"
+                        name="heroKicker"
+                        value={homepageContent.heroKicker}
+                        onChange={handleHomepageContentChange}
+                        className="w-full border-2 border-black px-4 py-3 outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Title Line 1
+                        </label>
+                        <input
+                          type="text"
+                          name="heroTitleLine1"
+                          value={homepageContent.heroTitleLine1}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Title Line 2
+                        </label>
+                        <input
+                          type="text"
+                          name="heroTitleLine2"
+                          value={homepageContent.heroTitleLine2}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-black uppercase">
+                        Description
+                      </label>
+                      <textarea
+                        name="heroDescription"
+                        value={homepageContent.heroDescription}
+                        onChange={handleHomepageContentChange}
+                        rows="4"
+                        className="w-full border-2 border-black px-4 py-3 outline-none"
+                      ></textarea>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Primary Button Text
+                        </label>
+                        <input
+                          type="text"
+                          name="heroPrimaryButtonText"
+                          value={homepageContent.heroPrimaryButtonText}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Primary Button Link
+                        </label>
+                        <input
+                          type="text"
+                          name="heroPrimaryButtonLink"
+                          value={homepageContent.heroPrimaryButtonLink}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="/catalog"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Secondary Button Text
+                        </label>
+                        <input
+                          type="text"
+                          name="heroSecondaryButtonText"
+                          value={homepageContent.heroSecondaryButtonText}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Secondary Button Link
+                        </label>
+                        <input
+                          type="text"
+                          name="heroSecondaryButtonLink"
+                          value={homepageContent.heroSecondaryButtonLink}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="/updates"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-5">
+                    <h3 className="text-xl font-black uppercase">
+                      Bottom Promo Section
+                    </h3>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Promo Small Label
+                        </label>
+                        <input
+                          type="text"
+                          name="promoKicker"
+                          value={homepageContent.promoKicker}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Promo Title
+                        </label>
+                        <input
+                          type="text"
+                          name="promoTitle"
+                          value={homepageContent.promoTitle}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Days
+                        </label>
+                        <input
+                          type="text"
+                          name="promoDays"
+                          value={homepageContent.promoDays}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Hours
+                        </label>
+                        <input
+                          type="text"
+                          name="promoHours"
+                          value={homepageContent.promoHours}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Minutes
+                        </label>
+                        <input
+                          type="text"
+                          name="promoMinutes"
+                          value={homepageContent.promoMinutes}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Lab Series Title
+                        </label>
+                        <input
+                          type="text"
+                          name="labSeriesTitle"
+                          value={homepageContent.labSeriesTitle}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Lab Series Label
+                        </label>
+                        <input
+                          type="text"
+                          name="labSeriesKicker"
+                          value={homepageContent.labSeriesKicker}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-black uppercase">
+                        Left Panel Image URL
+                      </label>
+                      <input
+                        type="text"
+                        name="promoImageUrl"
+                        value={homepageContent.promoImageUrl}
+                        onChange={handleHomepageContentChange}
+                        className="w-full border-2 border-black px-4 py-3 outline-none"
+                        placeholder="Paste image URL to appear behind the Lab Series card"
+                      />
+                    </div>
+
+                    <div className="grid gap-5 md:grid-cols-3">
+                      <div className="border-2 border-black p-4">
+                        <h4 className="mb-4 text-sm font-black uppercase">
+                          Tile One
+                        </h4>
+                        <div className="grid gap-4">
+                          <input
+                            type="text"
+                            name="promoTileOneIcon"
+                            value={homepageContent.promoTileOneIcon}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="◉"
+                          />
+                          <input
+                            type="text"
+                            name="promoTileOneTitle"
+                            value={homepageContent.promoTileOneTitle}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="Global Network"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border-2 border-black p-4">
+                        <h4 className="mb-4 text-sm font-black uppercase">
+                          Tile Two
+                        </h4>
+                        <div className="grid gap-4">
+                          <input
+                            type="text"
+                            name="promoTileTwoIcon"
+                            value={homepageContent.promoTileTwoIcon}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="◎"
+                          />
+                          <input
+                            type="text"
+                            name="promoTileTwoTitle"
+                            value={homepageContent.promoTileTwoTitle}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="Verified Authentic"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border-2 border-black p-4">
+                        <h4 className="mb-4 text-sm font-black uppercase">
+                          Tile Three
+                        </h4>
+                        <div className="grid gap-4">
+                          <input
+                            type="text"
+                            name="promoTileThreeIcon"
+                            value={homepageContent.promoTileThreeIcon}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="▲"
+                          />
+                          <input
+                            type="text"
+                            name="promoTileThreeTitle"
+                            value={homepageContent.promoTileThreeTitle}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="Engineered Motion"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {homepageMessage && (
+                    <p className="text-sm font-bold text-[#b60055]">
+                      {homepageMessage}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSavingHomepage}
+                    className="w-fit border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSavingHomepage
+                      ? "Saving..."
+                      : "Save Homepage Content"}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {activeSection === "about-content" && (
+              <div className="glow-pink border-4 border-black bg-white p-6">
+                <h2 className="mb-6 text-2xl font-black uppercase">
+                  About Content
+                </h2>
+
+                <form onSubmit={handleAboutContentSubmit} className="grid gap-5">
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Hero Small Label
+                    </label>
+                    <input
+                      type="text"
+                      name="heroKicker"
+                      value={aboutContent.heroKicker}
+                      onChange={handleAboutContentChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Hero Title
+                    </label>
+                    <input
+                      type="text"
+                      name="heroTitle"
+                      value={aboutContent.heroTitle}
+                      onChange={handleAboutContentChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Hero Description
+                    </label>
+                    <textarea
+                      name="heroDescription"
+                      value={aboutContent.heroDescription}
+                      onChange={handleAboutContentChange}
+                      rows="4"
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    ></textarea>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Story Section Title
+                    </label>
+                    <input
+                      type="text"
+                      name="storyTitle"
+                      value={aboutContent.storyTitle}
+                      onChange={handleAboutContentChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Story Paragraph One
+                    </label>
+                    <textarea
+                      name="storyParagraphOne"
+                      value={aboutContent.storyParagraphOne}
+                      onChange={handleAboutContentChange}
+                      rows="4"
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    ></textarea>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Story Paragraph Two
+                    </label>
+                    <textarea
+                      name="storyParagraphTwo"
+                      value={aboutContent.storyParagraphTwo}
+                      onChange={handleAboutContentChange}
+                      rows="4"
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    ></textarea>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Owner Section Title
+                    </label>
+                    <input
+                      type="text"
+                      name="ownerTitle"
+                      value={aboutContent.ownerTitle}
+                      onChange={handleAboutContentChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                    <div className="border-2 border-black p-4">
+                      <h4 className="mb-4 text-sm font-black uppercase">
+                        Bottom Card One
+                      </h4>
+                      <div className="grid gap-4">
+                        <input
+                          type="text"
+                          name="featureOneTitle"
+                          value={aboutContent.featureOneTitle}
+                          onChange={handleAboutContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="Multiple Brands"
+                        />
+                        <textarea
+                          name="featureOneDescription"
+                          value={aboutContent.featureOneDescription}
+                          onChange={handleAboutContentChange}
+                          rows="4"
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="Description"
+                        ></textarea>
+                      </div>
+                    </div>
+
+                    <div className="border-2 border-black p-4">
+                      <h4 className="mb-4 text-sm font-black uppercase">
+                        Bottom Card Two
+                      </h4>
+                      <div className="grid gap-4">
+                        <input
+                          type="text"
+                          name="featureTwoTitle"
+                          value={aboutContent.featureTwoTitle}
+                          onChange={handleAboutContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="New Arrivals"
+                        />
+                        <textarea
+                          name="featureTwoDescription"
+                          value={aboutContent.featureTwoDescription}
+                          onChange={handleAboutContentChange}
+                          rows="4"
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="Description"
+                        ></textarea>
+                      </div>
+                    </div>
+
+                    <div className="border-2 border-black p-4">
+                      <h4 className="mb-4 text-sm font-black uppercase">
+                        Bottom Card Three
+                      </h4>
+                      <div className="grid gap-4">
+                        <input
+                          type="text"
+                          name="featureThreeTitle"
+                          value={aboutContent.featureThreeTitle}
+                          onChange={handleAboutContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="Easy Inquiry"
+                        />
+                        <textarea
+                          name="featureThreeDescription"
+                          value={aboutContent.featureThreeDescription}
+                          onChange={handleAboutContentChange}
+                          rows="4"
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="Description"
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  {aboutMessage && (
+                    <p className="text-sm font-bold text-[#b60055]">
+                      {aboutMessage}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSavingAbout}
+                    className="w-fit border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSavingAbout ? "Saving..." : "Save About Content"}
+                  </button>
+                </form>
               </div>
             )}
           </div>

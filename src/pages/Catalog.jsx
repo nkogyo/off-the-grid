@@ -1,58 +1,57 @@
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 
-const defaultBrands = ["All", "Nike", "Adidas", "Puma", "New Balance"];
-const sizes = [7, 8, 9, 10, 11];
-
 export default function Catalog() {
   const [searchParams] = useSearchParams();
-  const initialBrand = searchParams.get("brand");
-
   const [products, setProducts] = useState([]);
-  const [brandOptions, setBrandOptions] = useState(defaultBrands);
   const [selectedBrand, setSelectedBrand] = useState(
-    initialBrand || "All"
+    searchParams.get("brand") || "All"
   );
   const [selectedSize, setSelectedSize] = useState(null);
-
-  useEffect(() => {
-    const brandFromUrl = searchParams.get("brand");
-    if (brandFromUrl) {
-      setSelectedBrand(brandFromUrl);
-    } else {
-      setSelectedBrand("All");
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     const fetchProducts = async () => {
       const snapshot = await getDocs(collection(db, "products"));
 
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
+      const data = snapshot.docs.map((docItem) => ({
+        id: docItem.id,
+        ...docItem.data(),
       }));
 
       setProducts(data);
     };
 
-    const fetchBrands = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "brands"));
-        const fetchedBrands = snapshot.docs.map((doc) => doc.data().name);
-        setBrandOptions(["All", ...fetchedBrands]);
-      } catch (error) {
-        console.error("Error fetching brands:", error);
-        setBrandOptions(defaultBrands);
-      }
-    };
-
     fetchProducts();
-    fetchBrands();
   }, []);
+
+  const brands = useMemo(() => {
+    const allBrands = products
+      .map((product) => product.brand)
+      .filter(Boolean)
+      .filter((brand, index, arr) => arr.indexOf(brand) === index);
+
+    return ["All", ...allBrands];
+  }, [products]);
+
+  const sizes = useMemo(() => {
+    const allSizes = products
+      .flatMap((product) => (Array.isArray(product.sizes) ? product.sizes : []))
+      .filter((size) => size !== null && size !== undefined)
+      .filter((size, index, arr) => arr.indexOf(size) === index)
+      .sort((a, b) => Number(a) - Number(b));
+
+    return allSizes;
+  }, [products]);
+
+  useEffect(() => {
+    const brandFromQuery = searchParams.get("brand");
+    if (brandFromQuery) {
+      setSelectedBrand(brandFromQuery);
+    }
+  }, [searchParams]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -60,7 +59,8 @@ export default function Catalog() {
         selectedBrand === "All" || product.brand === selectedBrand;
 
       const sizeMatch =
-        selectedSize === null || product.sizes?.includes(selectedSize);
+        selectedSize === null ||
+        (Array.isArray(product.sizes) && product.sizes.includes(selectedSize));
 
       return brandMatch && sizeMatch;
     });
@@ -69,16 +69,16 @@ export default function Catalog() {
   return (
     <Layout>
       <main className="min-h-screen pt-10">
-        <div className="mx-auto flex max-w-7xl gap-8 px-6 pb-20">
-          <aside className="glow-pink hidden w-64 border-4 border-black bg-white p-6 lg:block">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 pb-20 lg:flex-row">
+          <aside className="panel-shadow w-full border-2 border-black bg-white p-6 lg:w-64">
             <h3 className="mb-4 font-black uppercase">Brands</h3>
 
             <div className="mb-6 flex flex-wrap gap-2">
-              {brandOptions.map((brand) => (
+              {brands.map((brand) => (
                 <button
                   key={brand}
                   onClick={() => setSelectedBrand(brand)}
-                  className={`px-3 py-2 border-2 border-black font-bold ${
+                  className={`border-2 border-black px-3 py-2 font-bold ${
                     selectedBrand === brand
                       ? "bg-[#b60055] text-white"
                       : "bg-white"
@@ -98,7 +98,7 @@ export default function Catalog() {
                   onClick={() =>
                     setSelectedSize(selectedSize === size ? null : size)
                   }
-                  className={`px-3 py-2 border-2 border-black font-bold ${
+                  className={`border-2 border-black px-3 py-2 font-bold ${
                     selectedSize === size
                       ? "bg-[#b60055] text-white"
                       : "bg-white"
@@ -111,7 +111,7 @@ export default function Catalog() {
           </aside>
 
           <section className="flex-1">
-            <div className="glow-pink mb-8 border-4 border-black bg-[#b60055] p-6 text-white">
+            <div className="panel-shadow mb-8 border-2 border-black bg-[#b60055] p-6 text-white">
               <h1 className="text-4xl font-black uppercase">Catalog</h1>
               <p className="mt-2 font-medium">
                 {filteredProducts.length} products found
@@ -123,18 +123,12 @@ export default function Catalog() {
                 <Link
                   to={`/product/${product.id}`}
                   key={product.id}
-                  className="glow-hover border-4 border-black bg-white p-4"
+                  className="card-hover border-2 border-black bg-white p-4"
                 >
                   <div className="relative border-2 border-black bg-[#f8f3e8] p-4">
                     {product.tag && (
                       <div className="absolute right-0 top-0 border-b-2 border-l-2 border-black bg-[#b60055] px-2 py-1 text-xs font-bold text-white">
                         {product.tag}
-                      </div>
-                    )}
-
-                    {product.isNewArrival && (
-                      <div className="absolute left-0 top-0 border-b-2 border-r-2 border-black bg-[#c1ff72] px-2 py-1 text-xs font-bold uppercase text-black">
-                        New
                       </div>
                     )}
 
@@ -154,7 +148,7 @@ export default function Catalog() {
                   </p>
 
                   <p className="mt-2 font-bold text-[#b60055]">
-                    ₱{product.price.toLocaleString()}
+                    ₱{Number(product.price).toLocaleString()}
                   </p>
                 </Link>
               ))}
