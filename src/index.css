@@ -9,48 +9,209 @@ body,
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background-color: #ffffff;
-}
-
-#root {
+  background-color: #f6f6f4;
+  color: #111111;
   background-image:
-    linear-gradient(to right, rgba(0, 0, 0, 0.12) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.12) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-position: top left;
+    linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
-.glow-pink {
-  box-shadow:
-    6px 6px 0 #000,
-    0 0 0 2px #000,
-    0 0 24px rgba(182, 0, 85, 0.28);
+* {
+  box-sizing: border-box;
 }
 
-.glow-green {
-  box-shadow:
-    6px 6px 0 #000,
-    0 0 0 2px #000,
-    0 0 24px rgba(193, 255, 114, 0.35);
-}
-
-.glow-orange {
-  box-shadow:
-    6px 6px 0 #000,
-    0 0 0 2px #000,
-    0 0 24px rgba(255, 107, 87, 0.32);
-}
-
-.glow-hover {
+a,
+button,
+input,
+textarea,
+select {
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    background-color 0.22s ease,
+    color 0.22s ease,
+    border-color 0.22s ease,
+    opacity 0.22s ease;
 }
 
-.glow-hover:hover {
+img {
+  display: block;
+}
+
+/* core card styles */
+.panel-shadow {
+  box-shadow: 6px 6px 0 #000;
+}
+
+.card-hover {
+  box-shadow: 4px 4px 0 #000;
+}
+
+.card-hover:hover {
   transform: translateY(-4px);
-  box-shadow:
-    8px 8px 0 #000,
-    0 0 0 2px #000,
-    0 0 30px rgba(182, 0, 85, 0.35);
+  box-shadow: 8px 8px 0 #000;
+}
+
+.pink-accent {
+  color: #ff0a7a;
+}
+
+.pink-bg {
+  background-color: #ff0a7a;
+}
+
+.soft-panel {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+/* hero animations */
+.fade-up {
+  animation: fadeUp 0.7s ease both;
+}
+
+.fade-up-delay-1 {
+  animation: fadeUp 0.9s ease both;
+}
+
+.fade-up-delay-2 {
+  animation: fadeUp 1.05s ease both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.float-card {
+  animation: floatCard 3.2s ease-in-out infinite;
+}
+
+@keyframes floatCard {
+  0% {
+    transform: rotate(-8deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-6deg) translateY(-8px);
+  }
+  100% {
+    transform: rotate(-8deg) translateY(0);
+  }
+}
+
+/* labels / micro text */
+.micro-label {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.section-kicker {
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: #ff0a7a;
+}
+
+.big-title {
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+/* marquee / brand strip feel */
+.brand-strip-item {
+  position: relative;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+}
+
+.brand-strip-item::after {
+  content: "/";
+  color: #ff0a7a;
+  margin-left: 2rem;
+  font-weight: 900;
+}
+
+.brand-strip-item:last-child::after {
+  display: none;
+}
+
+/* featured image frame */
+.feature-frame {
+  position: relative;
+  background: #f6dce8;
+}
+
+.feature-frame::before {
+  content: "";
+  position: absolute;
+  inset: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  pointer-events: none;
+}
+
+.feature-rotated-card {
+  box-shadow: 10px 10px 0 #000;
+}
+
+/* pill / tags */
+.hot-tag {
+  border: 2px solid #000;
+  background: #ff0a7a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  padding: 4px 8px;
+}
+
+.lime-tag {
+  border: 2px solid #000;
+  background: #d8ff6f;
+  color: #000;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  padding: 4px 8px;
+}
+
+/* footer icons zone */
+.icon-chip {
+  border: 2px solid #000;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+/* mobile tuning */
+@media (max-width: 640px) {
+  body {
+    background-size: 22px 22px;
+  }
+
+  .panel-shadow {
+    box-shadow: 4px 4px 0 #000;
+  }
+
+  .card-hover {
+    box-shadow: 3px 3px 0 #000;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 5px 5px 0 #000;
+  }
 }
