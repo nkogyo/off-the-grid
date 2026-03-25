@@ -5,7 +5,9 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../../firebase/config";
@@ -28,6 +30,7 @@ const initialStoreInfo = {
   businessHours: "Monday - Sunday | 9:00 AM - 8:00 PM",
   facebook: "Off The Grid",
   instagram: "@offthegrid",
+  ownerImageUrl: "",
 };
 
 const initialUpdateForm = {
@@ -47,6 +50,7 @@ export default function AdminDashboard() {
 
   const [storeInfo, setStoreInfo] = useState(initialStoreInfo);
   const [storeMessage, setStoreMessage] = useState("");
+  const [isSavingStoreInfo, setIsSavingStoreInfo] = useState(false);
 
   const [updateForm, setUpdateForm] = useState(initialUpdateForm);
   const [updates, setUpdates] = useState([
@@ -73,8 +77,30 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchStoreInfo = async () => {
+    try {
+      setStoreMessage("");
+      const storeRef = doc(db, "storeInfo", "main");
+      const storeSnap = await getDoc(storeRef);
+
+      if (storeSnap.exists()) {
+        setStoreInfo((prev) => ({
+          ...prev,
+          ...storeSnap.data(),
+        }));
+      } else {
+        await setDoc(storeRef, initialStoreInfo);
+        setStoreInfo(initialStoreInfo);
+      }
+    } catch (error) {
+      console.error("Error fetching store info:", error);
+      setStoreMessage(`Failed to load store information: ${error.message}`);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchStoreInfo();
   }, []);
 
   const handleChange = (e) => {
@@ -201,9 +227,33 @@ export default function AdminDashboard() {
     }));
   };
 
-  const handleStoreInfoSubmit = (e) => {
+  const handleStoreInfoSubmit = async (e) => {
     e.preventDefault();
-    setStoreMessage("Store information updated locally.");
+    setStoreMessage("");
+
+    try {
+      setIsSavingStoreInfo(true);
+
+      const payload = {
+        storeName: storeInfo.storeName.trim(),
+        address: storeInfo.address.trim(),
+        contactNumber: storeInfo.contactNumber.trim(),
+        email: storeInfo.email.trim(),
+        businessHours: storeInfo.businessHours.trim(),
+        facebook: storeInfo.facebook.trim(),
+        instagram: storeInfo.instagram.trim(),
+        ownerImageUrl: storeInfo.ownerImageUrl.trim(),
+      };
+
+      await setDoc(doc(db, "storeInfo", "main"), payload);
+      setStoreInfo(payload);
+      setStoreMessage("Store information saved successfully.");
+    } catch (error) {
+      console.error("Error saving store info:", error);
+      setStoreMessage(`Failed to save store information: ${error.message}`);
+    } finally {
+      setIsSavingStoreInfo(false);
+    }
   };
 
   const handleUpdateFormChange = (e) => {
@@ -575,6 +625,36 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
+                  <div>
+                    <label className="mb-2 block text-sm font-black uppercase">
+                      Owner Image URL
+                    </label>
+                    <input
+                      type="text"
+                      name="ownerImageUrl"
+                      value={storeInfo.ownerImageUrl}
+                      onChange={handleStoreInfoChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                      placeholder="Paste image URL for owner picture"
+                    />
+                  </div>
+
+                  {storeInfo.ownerImageUrl && (
+                    <div>
+                      <p className="mb-2 text-sm font-black uppercase">
+                        Image Preview
+                      </p>
+                      <img
+                        src={storeInfo.ownerImageUrl}
+                        alt="Owner preview"
+                        className="h-56 w-full max-w-sm border-2 border-black object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    </div>
+                  )}
+
                   {storeMessage && (
                     <p className="text-sm font-bold text-[#b60055]">
                       {storeMessage}
@@ -583,9 +663,10 @@ export default function AdminDashboard() {
 
                   <button
                     type="submit"
-                    className="border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1"
+                    disabled={isSavingStoreInfo}
+                    className="border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    Save Store Info
+                    {isSavingStoreInfo ? "Saving..." : "Save Store Info"}
                   </button>
                 </form>
               </div>
@@ -672,7 +753,7 @@ export default function AdminDashboard() {
                         </h3>
                         <p className="mt-2 text-gray-700">{item.content}</p>
                         {item.image && (
-                          <p className="mt-3 text-sm font-medium text-[#b60055] break-all">
+                          <p className="mt-3 break-all text-sm font-medium text-[#b60055]">
                             {item.image}
                           </p>
                         )}
