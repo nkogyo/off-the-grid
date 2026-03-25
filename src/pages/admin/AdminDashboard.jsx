@@ -43,6 +43,37 @@ const initialUpdateForm = {
   image: "",
 };
 
+const initialHomepageContent = {
+  heroKicker: "System Protocol 01",
+  heroTitleLine1: "Neon",
+  heroTitleLine2: "Velocity",
+  heroDescription:
+    "Engineered with kinetic air technology for the urban marathon. The future of culture starts at ground level.",
+  heroPrimaryButtonText: "Shop The Drop",
+  heroPrimaryButtonLink: "/catalog",
+  heroSecondaryButtonText: "Specifications",
+  heroSecondaryButtonLink: "/updates",
+
+  promoKicker: "Upcoming Data Drop",
+  promoTitle: "Hyper-Sonic X",
+  promoDays: "04",
+  promoHours: "12",
+  promoMinutes: "55",
+
+  labSeriesTitle: "The Lab Series",
+  labSeriesKicker: "Access Protocol",
+  promoImageUrl: "",
+
+  promoTileOneIcon: "◉",
+  promoTileOneTitle: "Global Network",
+
+  promoTileTwoIcon: "◎",
+  promoTileTwoTitle: "Verified Authentic",
+
+  promoTileThreeIcon: "▲",
+  promoTileThreeTitle: "Engineered Motion",
+};
+
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("add-product");
 
@@ -69,6 +100,10 @@ export default function AdminDashboard() {
   const [featuredProductId, setFeaturedProductId] = useState("");
   const [featuredMessage, setFeaturedMessage] = useState("");
   const [isSavingFeatured, setIsSavingFeatured] = useState(false);
+
+  const [homepageContent, setHomepageContent] = useState(initialHomepageContent);
+  const [homepageMessage, setHomepageMessage] = useState("");
+  const [isSavingHomepage, setIsSavingHomepage] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -153,12 +188,34 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchHomepageContent = async () => {
+    try {
+      setHomepageMessage("");
+      const homepageRef = doc(db, "homepageContent", "main");
+      const homepageSnap = await getDoc(homepageRef);
+
+      if (homepageSnap.exists()) {
+        setHomepageContent((prev) => ({
+          ...prev,
+          ...homepageSnap.data(),
+        }));
+      } else {
+        await setDoc(homepageRef, initialHomepageContent);
+        setHomepageContent(initialHomepageContent);
+      }
+    } catch (error) {
+      console.error("Error fetching homepage content:", error);
+      setHomepageMessage("Failed to load homepage content.");
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchStoreInfo();
     fetchUpdates();
     fetchBrands();
     fetchFeaturedProduct();
+    fetchHomepageContent();
   }, []);
 
   const handleLogout = async () => {
@@ -466,6 +523,62 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleHomepageContentChange = (e) => {
+    const { name, value } = e.target;
+    setHomepageContent((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleHomepageContentSubmit = async (e) => {
+    e.preventDefault();
+    setHomepageMessage("");
+
+    try {
+      setIsSavingHomepage(true);
+
+      const payload = {
+        heroKicker: homepageContent.heroKicker.trim(),
+        heroTitleLine1: homepageContent.heroTitleLine1.trim(),
+        heroTitleLine2: homepageContent.heroTitleLine2.trim(),
+        heroDescription: homepageContent.heroDescription.trim(),
+        heroPrimaryButtonText: homepageContent.heroPrimaryButtonText.trim(),
+        heroPrimaryButtonLink: homepageContent.heroPrimaryButtonLink.trim(),
+        heroSecondaryButtonText: homepageContent.heroSecondaryButtonText.trim(),
+        heroSecondaryButtonLink: homepageContent.heroSecondaryButtonLink.trim(),
+
+        promoKicker: homepageContent.promoKicker.trim(),
+        promoTitle: homepageContent.promoTitle.trim(),
+        promoDays: homepageContent.promoDays.trim(),
+        promoHours: homepageContent.promoHours.trim(),
+        promoMinutes: homepageContent.promoMinutes.trim(),
+
+        labSeriesTitle: homepageContent.labSeriesTitle.trim(),
+        labSeriesKicker: homepageContent.labSeriesKicker.trim(),
+        promoImageUrl: homepageContent.promoImageUrl.trim(),
+
+        promoTileOneIcon: homepageContent.promoTileOneIcon.trim(),
+        promoTileOneTitle: homepageContent.promoTileOneTitle.trim(),
+
+        promoTileTwoIcon: homepageContent.promoTileTwoIcon.trim(),
+        promoTileTwoTitle: homepageContent.promoTileTwoTitle.trim(),
+
+        promoTileThreeIcon: homepageContent.promoTileThreeIcon.trim(),
+        promoTileThreeTitle: homepageContent.promoTileThreeTitle.trim(),
+      };
+
+      await setDoc(doc(db, "homepageContent", "main"), payload);
+      setHomepageContent(payload);
+      setHomepageMessage("Homepage content saved successfully.");
+    } catch (error) {
+      console.error("Error saving homepage content:", error);
+      setHomepageMessage("Failed to save homepage content.");
+    } finally {
+      setIsSavingHomepage(false);
+    }
+  };
+
   const renderSidebarButton = (id, label) => {
     const isActive = activeSection === id;
 
@@ -474,7 +587,9 @@ export default function AdminDashboard() {
         type="button"
         onClick={() => setActiveSection(id)}
         className={`w-full border-2 border-black px-4 py-3 text-left font-bold uppercase transition ${
-          isActive ? "bg-[#b60055] text-white" : "bg-white hover:-translate-y-0.5"
+          isActive
+            ? "bg-[#b60055] text-white"
+            : "bg-white hover:-translate-y-0.5"
         }`}
       >
         {label}
@@ -493,7 +608,8 @@ export default function AdminDashboard() {
           <aside className="glow-pink border-4 border-black bg-white p-6">
             <h2 className="text-2xl font-black uppercase">Admin Panel</h2>
             <p className="mt-2 text-sm font-medium text-gray-600">
-              Manage products, updates, store details, brands, and featured sneaker.
+              Manage products, updates, store details, brands, featured sneaker,
+              and homepage content.
             </p>
 
             <div className="mt-8 space-y-3">
@@ -503,6 +619,7 @@ export default function AdminDashboard() {
               {renderSidebarButton("updates", "Updates")}
               {renderSidebarButton("brands", "Brands")}
               {renderSidebarButton("featured-sneaker", "Featured Sneaker")}
+              {renderSidebarButton("homepage-content", "Homepage Content")}
             </div>
           </aside>
 
@@ -514,7 +631,8 @@ export default function AdminDashboard() {
                     Admin Dashboard
                   </h1>
                   <p className="mt-2 font-medium">
-                    Manage products, inventory, store details, updates, brands, and featured sneaker.
+                    Manage products, inventory, store details, updates, brands,
+                    featured sneaker, and homepage content.
                   </p>
                 </div>
 
@@ -659,7 +777,9 @@ export default function AdminDashboard() {
                   </label>
 
                   {message && (
-                    <p className="text-sm font-bold text-[#b60055]">{message}</p>
+                    <p className="text-sm font-bold text-[#b60055]">
+                      {message}
+                    </p>
                   )}
 
                   <button
@@ -732,7 +852,9 @@ export default function AdminDashboard() {
 
                           <button
                             type="button"
-                            onClick={() => handleDelete(product.id, product.name)}
+                            onClick={() =>
+                              handleDelete(product.id, product.name)
+                            }
                             className="border-2 border-black bg-black px-4 py-2 text-sm font-black uppercase text-white hover:-translate-y-0.5 transition"
                           >
                             Delete
@@ -757,7 +879,9 @@ export default function AdminDashboard() {
 
             {activeSection === "store-info" && (
               <div className="glow-pink border-4 border-black bg-white p-6">
-                <h2 className="mb-6 text-2xl font-black uppercase">Store Info</h2>
+                <h2 className="mb-6 text-2xl font-black uppercase">
+                  Store Info
+                </h2>
 
                 <form onSubmit={handleStoreInfoSubmit} className="grid gap-5">
                   <div>
@@ -997,7 +1121,9 @@ export default function AdminDashboard() {
                           <div className="mt-4">
                             <button
                               type="button"
-                              onClick={() => handleDeleteUpdate(item.id, item.title)}
+                              onClick={() =>
+                                handleDeleteUpdate(item.id, item.title)
+                              }
                               className="border-2 border-black bg-black px-4 py-2 text-sm font-black uppercase text-white hover:-translate-y-0.5 transition"
                             >
                               Delete Update
@@ -1017,7 +1143,10 @@ export default function AdminDashboard() {
                   Manage Brands
                 </h2>
 
-                <form onSubmit={handleBrandSubmit} className="mb-6 flex flex-col gap-4 md:flex-row">
+                <form
+                  onSubmit={handleBrandSubmit}
+                  className="mb-6 flex flex-col gap-4 md:flex-row"
+                >
                   <input
                     type="text"
                     value={brandName}
@@ -1050,11 +1179,15 @@ export default function AdminDashboard() {
                         key={brand.id}
                         className="flex items-center gap-2 border-2 border-black bg-[#f8f3e8] px-4 py-2"
                       >
-                        <span className="font-bold uppercase">{brand.name}</span>
+                        <span className="font-bold uppercase">
+                          {brand.name}
+                        </span>
 
                         <button
                           type="button"
-                          onClick={() => handleDeleteBrand(brand.id, brand.name)}
+                          onClick={() =>
+                            handleDeleteBrand(brand.id, brand.name)
+                          }
                           className="border border-black bg-black px-2 py-1 text-xs font-bold uppercase text-white"
                         >
                           X
@@ -1072,7 +1205,10 @@ export default function AdminDashboard() {
                   Featured Sneaker
                 </h2>
 
-                <form onSubmit={handleFeaturedSneakerSubmit} className="grid gap-5">
+                <form
+                  onSubmit={handleFeaturedSneakerSubmit}
+                  className="grid gap-5"
+                >
                   <div>
                     <label className="mb-2 block text-sm font-black uppercase">
                       Select Product
@@ -1102,7 +1238,9 @@ export default function AdminDashboard() {
                     disabled={isSavingFeatured}
                     className="w-fit border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isSavingFeatured ? "Saving..." : "Save Featured Sneaker"}
+                    {isSavingFeatured
+                      ? "Saving..."
+                      : "Save Featured Sneaker"}
                   </button>
                 </form>
 
@@ -1128,13 +1266,355 @@ export default function AdminDashboard() {
                       </p>
 
                       <p className="mt-2 font-bold text-[#b60055]">
-                        ₱{Number(currentFeaturedProduct.price).toLocaleString()}
+                        ₱{Number(
+                          currentFeaturedProduct.price
+                        ).toLocaleString()}
                       </p>
                     </div>
                   ) : (
-                    <p className="text-gray-600">No featured sneaker selected yet.</p>
+                    <p className="text-gray-600">
+                      No featured sneaker selected yet.
+                    </p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {activeSection === "homepage-content" && (
+              <div className="glow-pink border-4 border-black bg-white p-6">
+                <h2 className="mb-6 text-2xl font-black uppercase">
+                  Homepage Content
+                </h2>
+
+                <form
+                  onSubmit={handleHomepageContentSubmit}
+                  className="grid gap-8"
+                >
+                  <div className="grid gap-5">
+                    <h3 className="text-xl font-black uppercase">
+                      Neon Velocity Section
+                    </h3>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-black uppercase">
+                        Small Label
+                      </label>
+                      <input
+                        type="text"
+                        name="heroKicker"
+                        value={homepageContent.heroKicker}
+                        onChange={handleHomepageContentChange}
+                        className="w-full border-2 border-black px-4 py-3 outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Title Line 1
+                        </label>
+                        <input
+                          type="text"
+                          name="heroTitleLine1"
+                          value={homepageContent.heroTitleLine1}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Title Line 2
+                        </label>
+                        <input
+                          type="text"
+                          name="heroTitleLine2"
+                          value={homepageContent.heroTitleLine2}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-black uppercase">
+                        Description
+                      </label>
+                      <textarea
+                        name="heroDescription"
+                        value={homepageContent.heroDescription}
+                        onChange={handleHomepageContentChange}
+                        rows="4"
+                        className="w-full border-2 border-black px-4 py-3 outline-none"
+                      ></textarea>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Primary Button Text
+                        </label>
+                        <input
+                          type="text"
+                          name="heroPrimaryButtonText"
+                          value={homepageContent.heroPrimaryButtonText}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Primary Button Link
+                        </label>
+                        <input
+                          type="text"
+                          name="heroPrimaryButtonLink"
+                          value={homepageContent.heroPrimaryButtonLink}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="/catalog"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Secondary Button Text
+                        </label>
+                        <input
+                          type="text"
+                          name="heroSecondaryButtonText"
+                          value={homepageContent.heroSecondaryButtonText}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Secondary Button Link
+                        </label>
+                        <input
+                          type="text"
+                          name="heroSecondaryButtonLink"
+                          value={homepageContent.heroSecondaryButtonLink}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                          placeholder="/updates"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-5">
+                    <h3 className="text-xl font-black uppercase">
+                      Bottom Promo Section
+                    </h3>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Promo Small Label
+                        </label>
+                        <input
+                          type="text"
+                          name="promoKicker"
+                          value={homepageContent.promoKicker}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Promo Title
+                        </label>
+                        <input
+                          type="text"
+                          name="promoTitle"
+                          value={homepageContent.promoTitle}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Days
+                        </label>
+                        <input
+                          type="text"
+                          name="promoDays"
+                          value={homepageContent.promoDays}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Hours
+                        </label>
+                        <input
+                          type="text"
+                          name="promoHours"
+                          value={homepageContent.promoHours}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Minutes
+                        </label>
+                        <input
+                          type="text"
+                          name="promoMinutes"
+                          value={homepageContent.promoMinutes}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Lab Series Title
+                        </label>
+                        <input
+                          type="text"
+                          name="labSeriesTitle"
+                          value={homepageContent.labSeriesTitle}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-black uppercase">
+                          Lab Series Label
+                        </label>
+                        <input
+                          type="text"
+                          name="labSeriesKicker"
+                          value={homepageContent.labSeriesKicker}
+                          onChange={handleHomepageContentChange}
+                          className="w-full border-2 border-black px-4 py-3 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-black uppercase">
+                        Left Panel Image URL
+                      </label>
+                      <input
+                        type="text"
+                        name="promoImageUrl"
+                        value={homepageContent.promoImageUrl}
+                        onChange={handleHomepageContentChange}
+                        className="w-full border-2 border-black px-4 py-3 outline-none"
+                        placeholder="Paste image URL to appear behind the Lab Series card"
+                      />
+                    </div>
+
+                    <div className="grid gap-5 md:grid-cols-3">
+                      <div className="border-2 border-black p-4">
+                        <h4 className="mb-4 text-sm font-black uppercase">
+                          Tile One
+                        </h4>
+                        <div className="grid gap-4">
+                          <input
+                            type="text"
+                            name="promoTileOneIcon"
+                            value={homepageContent.promoTileOneIcon}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="◉"
+                          />
+                          <input
+                            type="text"
+                            name="promoTileOneTitle"
+                            value={homepageContent.promoTileOneTitle}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="Global Network"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border-2 border-black p-4">
+                        <h4 className="mb-4 text-sm font-black uppercase">
+                          Tile Two
+                        </h4>
+                        <div className="grid gap-4">
+                          <input
+                            type="text"
+                            name="promoTileTwoIcon"
+                            value={homepageContent.promoTileTwoIcon}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="◎"
+                          />
+                          <input
+                            type="text"
+                            name="promoTileTwoTitle"
+                            value={homepageContent.promoTileTwoTitle}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="Verified Authentic"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border-2 border-black p-4">
+                        <h4 className="mb-4 text-sm font-black uppercase">
+                          Tile Three
+                        </h4>
+                        <div className="grid gap-4">
+                          <input
+                            type="text"
+                            name="promoTileThreeIcon"
+                            value={homepageContent.promoTileThreeIcon}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="▲"
+                          />
+                          <input
+                            type="text"
+                            name="promoTileThreeTitle"
+                            value={homepageContent.promoTileThreeTitle}
+                            onChange={handleHomepageContentChange}
+                            className="w-full border-2 border-black px-4 py-3 outline-none"
+                            placeholder="Engineered Motion"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {homepageMessage && (
+                    <p className="text-sm font-bold text-[#b60055]">
+                      {homepageMessage}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSavingHomepage}
+                    className="w-fit border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSavingHomepage
+                      ? "Saving..."
+                      : "Save Homepage Content"}
+                  </button>
+                </form>
               </div>
             )}
           </div>
