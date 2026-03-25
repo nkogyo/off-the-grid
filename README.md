@@ -20,6 +20,8 @@ Off The Grid is a modern sneaker product showcase web application built with Rea
 * Brand filtering via clickable featured brands
 * Inquiry system (Check Availability)
 
+Link: https://off-the-grid-b6472.web.app/
+
 ---
 
 ### 🛠️ Admin Dashboard (Protected)
@@ -38,6 +40,8 @@ Off The Grid is a modern sneaker product showcase web application built with Rea
   * New arrivals
   * Featured sneaker
   * Featured brands (text-based)
+
+Link: https://off-the-grid-b6472.web.app/admin
 
 ---
 
@@ -87,7 +91,7 @@ src/
 ## ⚙️ SETUP INSTRUCTIONS
 
 1. Clone the repository
-   git clone https://github.com/your-username/off-the-grid.git
+   git clone https://github.com/nkogyo/off-the-grid.git
    cd off-the-grid
 
 2. Install dependencies
@@ -163,7 +167,7 @@ Only authorized users can:
 
 ## 👨‍💻 DEVELOPER
 
-Developed by: DE JESUS, James Andrei; Jacinto, Euliemae; Marmol, Precious Gem; Ramos, Jocel Myca
+Developed by: DE JESUS, James Andrei; JACINTO, Euliemae; MARMOL, Precious Gem; RAMOS, Jocel Myca
 Project: Off The Grid Sneaker Platform
 
 ---
