@@ -27,7 +27,7 @@ export default function Updates() {
     <Layout>
       <section className="px-6 py-10 md:px-10 lg:px-16">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-8 border-4 border-black bg-[#b60055] p-8 text-white">
+          <div className="mb-8 border-4 border-black bg-[#4b75ff] p-8 text-white">
             <p className="mb-3 text-sm font-black uppercase tracking-[0.2em]">
               News And Announcements
             </p>

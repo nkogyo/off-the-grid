@@ -1,0 +1,22 @@
+{
+  "name": "off-the-grid-server",
+  "version": "1.0.0",
+  "description": "Node/Express backend for Off The Grid inquiries",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^12.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
