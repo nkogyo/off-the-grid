@@ -11,6 +11,7 @@ export default function Catalog() {
     searchParams.get("brand") || "All"
   );
   const [selectedSize, setSelectedSize] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -54,6 +55,8 @@ export default function Catalog() {
   }, [searchParams]);
 
   const filteredProducts = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
     return products.filter((product) => {
       const brandMatch =
         selectedBrand === "All" || product.brand === selectedBrand;
@@ -62,9 +65,16 @@ export default function Catalog() {
         selectedSize === null ||
         (Array.isArray(product.sizes) && product.sizes.includes(selectedSize));
 
-      return brandMatch && sizeMatch;
+      const searchMatch =
+        normalizedSearch === "" ||
+        product.name?.toLowerCase().includes(normalizedSearch) ||
+        product.brand?.toLowerCase().includes(normalizedSearch) ||
+        product.tag?.toLowerCase().includes(normalizedSearch) ||
+        product.description?.toLowerCase().includes(normalizedSearch);
+
+      return brandMatch && sizeMatch && searchMatch;
     });
-  }, [products, selectedBrand, selectedSize]);
+  }, [products, selectedBrand, selectedSize, searchTerm]);
 
   return (
     <Layout>
@@ -116,42 +126,63 @@ export default function Catalog() {
               <p className="mt-2 font-medium">
                 {filteredProducts.length} products found
               </p>
+
+              <div className="mt-5">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by product name, brand, tag, or description..."
+                  className="w-full border-2 border-black bg-white px-4 py-3 font-medium text-black outline-none"
+                />
+              </div>
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.map((product) => (
-                <Link
-                  to={`/product/${product.id}`}
-                  key={product.id}
-                  className="card-hover border-2 border-black bg-white p-4"
-                >
-                  <div className="relative border-2 border-black bg-[#f8f3e8] p-4">
-                    {product.tag && (
-                      <div className="absolute right-0 top-0 border-b-2 border-l-2 border-black bg-[#b60055] px-2 py-1 text-xs font-bold text-white">
-                        {product.tag}
-                      </div>
-                    )}
-
-                    <img
-                      src={`${product.image}?auto=format&fit=crop&w=600&q=80`}
-                      alt={product.name}
-                      className="h-[200px] w-full object-contain"
-                    />
-                  </div>
-
-                  <h2 className="mt-4 text-lg font-black uppercase">
-                    {product.name}
+              {filteredProducts.length === 0 ? (
+                <div className="col-span-full border-2 border-black bg-white p-8 text-center">
+                  <h2 className="text-2xl font-black uppercase">
+                    No products found
                   </h2>
-
-                  <p className="text-sm font-medium text-gray-600">
-                    {product.brand}
+                  <p className="mt-2 text-gray-600">
+                    Try changing your search, brand, or size filter.
                   </p>
+                </div>
+              ) : (
+                filteredProducts.map((product) => (
+                  <Link
+                    to={`/product/${product.id}`}
+                    key={product.id}
+                    className="card-hover border-2 border-black bg-white p-4"
+                  >
+                    <div className="relative border-2 border-black bg-[#f8f3e8] p-4">
+                      {product.tag && (
+                        <div className="absolute right-0 top-0 border-b-2 border-l-2 border-black bg-[#b60055] px-2 py-1 text-xs font-bold text-white">
+                          {product.tag}
+                        </div>
+                      )}
 
-                  <p className="mt-2 font-bold text-[#b60055]">
-                    ₱{Number(product.price).toLocaleString()}
-                  </p>
-                </Link>
-              ))}
+                      <img
+                        src={`${product.image}?auto=format&fit=crop&w=600&q=80`}
+                        alt={product.name}
+                        className="h-[200px] w-full object-contain"
+                      />
+                    </div>
+
+                    <h2 className="mt-4 text-lg font-black uppercase">
+                      {product.name}
+                    </h2>
+
+                    <p className="text-sm font-medium text-gray-600">
+                      {product.brand}
+                    </p>
+
+                    <p className="mt-2 font-bold text-[#b60055]">
+                      ₱{Number(product.price).toLocaleString()}
+                    </p>
+                  </Link>
+                ))
+              )}
             </div>
           </section>
         </div>
