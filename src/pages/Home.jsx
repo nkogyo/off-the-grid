@@ -7,6 +7,7 @@ import { db } from "../firebase/config";
 export default function Home() {
   const [updates, setUpdates] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
+  const [brands, setBrands] = useState([]);
 
   useEffect(() => {
     const fetchUpdates = async () => {
@@ -43,11 +44,23 @@ export default function Home() {
       }
     };
 
+    const fetchBrands = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "brands"));
+        const data = snapshot.docs.map((item) => ({
+          id: item.id,
+          ...item.data(),
+        }));
+        setBrands(data);
+      } catch (error) {
+        console.error("Error fetching brands:", error);
+      }
+    };
+
     fetchUpdates();
     fetchNewArrivals();
+    fetchBrands();
   }, []);
-
-  const featuredBrands = ["Nike", "Adidas", "Puma", "New Balance"];
 
   return (
     <Layout>
@@ -108,16 +121,22 @@ export default function Home() {
             Featured Brands
           </h2>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {featuredBrands.map((brand) => (
-              <Link
-                key={brand}
-                to={`/catalog?brand=${encodeURIComponent(brand)}`}
-                className="glow-hover flex items-center justify-center border-4 border-black bg-white py-6 text-center text-lg font-bold uppercase"
-              >
-                {brand}
-              </Link>
-            ))}
+          <div className="flex flex-wrap justify-center gap-4">
+            {brands.length === 0 ? (
+              <div className="border-4 border-black bg-white px-5 py-2 font-black uppercase">
+                No brands yet
+              </div>
+            ) : (
+              brands.map((brand) => (
+                <Link
+                  key={brand.id}
+                  to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
+                  className="glow-hover border-2 border-black px-5 py-2 font-black uppercase hover:bg-black hover:text-white transition"
+                >
+                  {brand.name}
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </section>

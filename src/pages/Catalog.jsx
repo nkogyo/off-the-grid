@@ -4,7 +4,7 @@ import Layout from "../components/layout/Layout";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 
-const brands = ["All", "Nike", "Adidas", "Puma", "New Balance"];
+const defaultBrands = ["All", "Nike", "Adidas", "Puma", "New Balance"];
 const sizes = [7, 8, 9, 10, 11];
 
 export default function Catalog() {
@@ -12,14 +12,15 @@ export default function Catalog() {
   const initialBrand = searchParams.get("brand");
 
   const [products, setProducts] = useState([]);
+  const [brandOptions, setBrandOptions] = useState(defaultBrands);
   const [selectedBrand, setSelectedBrand] = useState(
-    initialBrand && brands.includes(initialBrand) ? initialBrand : "All"
+    initialBrand || "All"
   );
   const [selectedSize, setSelectedSize] = useState(null);
 
   useEffect(() => {
     const brandFromUrl = searchParams.get("brand");
-    if (brandFromUrl && brands.includes(brandFromUrl)) {
+    if (brandFromUrl) {
       setSelectedBrand(brandFromUrl);
     } else {
       setSelectedBrand("All");
@@ -38,7 +39,19 @@ export default function Catalog() {
       setProducts(data);
     };
 
+    const fetchBrands = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "brands"));
+        const fetchedBrands = snapshot.docs.map((doc) => doc.data().name);
+        setBrandOptions(["All", ...fetchedBrands]);
+      } catch (error) {
+        console.error("Error fetching brands:", error);
+        setBrandOptions(defaultBrands);
+      }
+    };
+
     fetchProducts();
+    fetchBrands();
   }, []);
 
   const filteredProducts = useMemo(() => {
@@ -61,7 +74,7 @@ export default function Catalog() {
             <h3 className="mb-4 font-black uppercase">Brands</h3>
 
             <div className="mb-6 flex flex-wrap gap-2">
-              {brands.map((brand) => (
+              {brandOptions.map((brand) => (
                 <button
                   key={brand}
                   onClick={() => setSelectedBrand(brand)}

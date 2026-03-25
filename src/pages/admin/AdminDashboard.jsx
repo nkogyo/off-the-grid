@@ -61,6 +61,11 @@ export default function AdminDashboard() {
   const [updatesMessage, setUpdatesMessage] = useState("");
   const [isSavingUpdate, setIsSavingUpdate] = useState(false);
 
+  const [brands, setBrands] = useState([]);
+  const [brandName, setBrandName] = useState("");
+  const [brandMessage, setBrandMessage] = useState("");
+  const [isSavingBrand, setIsSavingBrand] = useState(false);
+
   const fetchProducts = async () => {
     try {
       const snapshot = await getDocs(collection(db, "products"));
@@ -114,10 +119,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchBrands = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "brands"));
+      const data = snapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data(),
+      }));
+      setBrands(data);
+    } catch (error) {
+      console.error("Error fetching brands:", error);
+      setBrandMessage("Failed to load brands.");
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchStoreInfo();
     fetchUpdates();
+    fetchBrands();
   }, []);
 
   const handleLogout = async () => {
@@ -352,6 +372,56 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleBrandSubmit = async (e) => {
+    e.preventDefault();
+    setBrandMessage("");
+
+    const trimmedName = brandName.trim();
+
+    if (!trimmedName) {
+      setBrandMessage("Please enter a brand name.");
+      return;
+    }
+
+    const alreadyExists = brands.some(
+      (brand) => brand.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+
+    if (alreadyExists) {
+      setBrandMessage("That brand already exists.");
+      return;
+    }
+
+    try {
+      setIsSavingBrand(true);
+      await addDoc(collection(db, "brands"), {
+        name: trimmedName,
+      });
+      setBrandName("");
+      setBrandMessage("Brand added successfully.");
+      fetchBrands();
+    } catch (error) {
+      console.error("Error adding brand:", error);
+      setBrandMessage("Failed to add brand.");
+    } finally {
+      setIsSavingBrand(false);
+    }
+  };
+
+  const handleDeleteBrand = async (brandId, brandNameValue) => {
+    const confirmed = window.confirm(`Delete brand "${brandNameValue}"?`);
+    if (!confirmed) return;
+
+    try {
+      await deleteDoc(doc(db, "brands", brandId));
+      setBrandMessage("Brand deleted successfully.");
+      fetchBrands();
+    } catch (error) {
+      console.error("Error deleting brand:", error);
+      setBrandMessage("Failed to delete brand.");
+    }
+  };
+
   const renderSidebarButton = (id, label) => {
     const isActive = activeSection === id;
 
@@ -375,7 +445,7 @@ export default function AdminDashboard() {
           <aside className="glow-pink border-4 border-black bg-white p-6">
             <h2 className="text-2xl font-black uppercase">Admin Panel</h2>
             <p className="mt-2 text-sm font-medium text-gray-600">
-              Manage products, updates, and store details.
+              Manage products, updates, store details, and brands.
             </p>
 
             <div className="mt-8 space-y-3">
@@ -383,6 +453,7 @@ export default function AdminDashboard() {
               {renderSidebarButton("inventory", "Inventory")}
               {renderSidebarButton("store-info", "Store Info")}
               {renderSidebarButton("updates", "Updates")}
+              {renderSidebarButton("brands", "Brands")}
             </div>
           </aside>
 
@@ -394,7 +465,7 @@ export default function AdminDashboard() {
                     Admin Dashboard
                   </h1>
                   <p className="mt-2 font-medium">
-                    Manage products, inventory, business details, and updates.
+                    Manage products, inventory, store details, updates, and brands.
                   </p>
                 </div>
 
@@ -887,6 +958,61 @@ export default function AdminDashboard() {
                       ))
                     )}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeSection === "brands" && (
+              <div className="glow-pink border-4 border-black bg-white p-6">
+                <h2 className="mb-6 text-2xl font-black uppercase">
+                  Manage Brands
+                </h2>
+
+                <form onSubmit={handleBrandSubmit} className="mb-6 flex flex-col gap-4 md:flex-row">
+                  <input
+                    type="text"
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
+                    placeholder="Enter brand name (Nike, Adidas...)"
+                    className="flex-1 border-2 border-black px-4 py-3 outline-none"
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={isSavingBrand}
+                    className="border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSavingBrand ? "Adding..." : "Add Brand"}
+                  </button>
+                </form>
+
+                {brandMessage && (
+                  <p className="mb-4 text-sm font-bold text-[#b60055]">
+                    {brandMessage}
+                  </p>
+                )}
+
+                <div className="flex flex-wrap gap-3">
+                  {brands.length === 0 ? (
+                    <p className="text-gray-600">No brands yet.</p>
+                  ) : (
+                    brands.map((brand) => (
+                      <div
+                        key={brand.id}
+                        className="flex items-center gap-2 border-2 border-black bg-[#f8f3e8] px-4 py-2"
+                      >
+                        <span className="font-bold uppercase">{brand.name}</span>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBrand(brand.id, brand.name)}
+                          className="border border-black bg-black px-2 py-1 text-xs font-bold uppercase text-white"
+                        >
+                          X
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
