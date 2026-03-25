@@ -507,14 +507,8 @@ export default function Home() {
               Off The <span className="pink-accent italic">Grid</span>
             </h2>
 
-            <div className="mt-10 flex items-center justify-center gap-4">
-              <span className="icon-chip">⌁</span>
-              <span className="icon-chip">↗</span>
-              <span className="icon-chip">◫</span>
-            </div>
-
             <div className="mt-8 inline-block border-2 border-black bg-black px-4 py-3 text-[10px] font-bold uppercase tracking-[0.22em] text-white">
-              © 2025 Off The Grid Monolith. Engineered For Culture.
+              © 2026 Off The Grid Monolith. Engineered For Culture.
             </div>
           </div>
         </footer>
