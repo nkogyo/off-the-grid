@@ -1,7 +1,33 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../components/layout/Layout";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { db } from "../firebase/config";
 
 export default function Home() {
+  const [updates, setUpdates] = useState([]);
+
+  useEffect(() => {
+    const fetchUpdates = async () => {
+      try {
+        const updatesQuery = query(
+          collection(db, "updates"),
+          orderBy("createdAt", "desc")
+        );
+        const snapshot = await getDocs(updatesQuery);
+        const data = snapshot.docs.map((item) => ({
+          id: item.id,
+          ...item.data(),
+        }));
+        setUpdates(data.slice(0, 3));
+      } catch (error) {
+        console.error("Error fetching updates:", error);
+      }
+    };
+
+    fetchUpdates();
+  }, []);
+
   return (
     <Layout>
       <section className="px-6 py-10 md:px-10 lg:px-16">
@@ -111,6 +137,47 @@ export default function Home() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-10 md:px-10 lg:px-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-black uppercase">
+              Latest Updates
+            </h2>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {updates.length === 0 ? (
+              <div className="border-4 border-black bg-white p-6 font-bold uppercase">
+                No updates yet
+              </div>
+            ) : (
+              updates.map((item) => (
+                <div
+                  key={item.id}
+                  className="glow-hover border-4 border-black bg-white p-4"
+                >
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="mb-4 h-48 w-full border-2 border-black object-cover"
+                    />
+                  )}
+
+                  <h3 className="text-xl font-black uppercase">
+                    {item.title}
+                  </h3>
+
+                  <p className="mt-3 text-sm leading-6 text-gray-700">
+                    {item.content}
+                  </p>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>

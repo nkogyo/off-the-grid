@@ -7,6 +7,8 @@ import {
   doc,
   getDoc,
   getDocs,
+  orderBy,
+  query,
   setDoc,
   updateDoc,
 } from "firebase/firestore";
@@ -53,15 +55,9 @@ export default function AdminDashboard() {
   const [isSavingStoreInfo, setIsSavingStoreInfo] = useState(false);
 
   const [updateForm, setUpdateForm] = useState(initialUpdateForm);
-  const [updates, setUpdates] = useState([
-    {
-      id: "1",
-      title: "New Arrival Drop",
-      content: "Fresh sneaker pairs have been added to the catalog.",
-      image: "",
-    },
-  ]);
+  const [updates, setUpdates] = useState([]);
   const [updatesMessage, setUpdatesMessage] = useState("");
+  const [isSavingUpdate, setIsSavingUpdate] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -98,9 +94,28 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchUpdates = async () => {
+    try {
+      const updatesQuery = query(
+        collection(db, "updates"),
+        orderBy("createdAt", "desc")
+      );
+      const snapshot = await getDocs(updatesQuery);
+      const data = snapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data(),
+      }));
+      setUpdates(data);
+    } catch (error) {
+      console.error("Error fetching updates:", error);
+      setUpdatesMessage("Failed to load updates.");
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchStoreInfo();
+    fetchUpdates();
   }, []);
 
   const handleChange = (e) => {
@@ -264,24 +279,52 @@ export default function AdminDashboard() {
     }));
   };
 
-  const handleUpdateSubmit = (e) => {
+  const handleUpdateSubmit = async (e) => {
     e.preventDefault();
+    setUpdatesMessage("");
 
-    if (!updateForm.title.trim() || !updateForm.content.trim()) {
+    const trimmedTitle = updateForm.title.trim();
+    const trimmedContent = updateForm.content.trim();
+    const trimmedImage = updateForm.image.trim();
+
+    if (!trimmedTitle || !trimmedContent) {
       setUpdatesMessage("Please fill in the update title and content.");
       return;
     }
 
-    const newUpdate = {
-      id: Date.now().toString(),
-      title: updateForm.title.trim(),
-      content: updateForm.content.trim(),
-      image: updateForm.image.trim(),
-    };
+    try {
+      setIsSavingUpdate(true);
 
-    setUpdates((prev) => [newUpdate, ...prev]);
-    setUpdateForm(initialUpdateForm);
-    setUpdatesMessage("Update added locally.");
+      await addDoc(collection(db, "updates"), {
+        title: trimmedTitle,
+        content: trimmedContent,
+        image: trimmedImage,
+        createdAt: Date.now(),
+      });
+
+      setUpdateForm(initialUpdateForm);
+      setUpdatesMessage("Update posted successfully.");
+      fetchUpdates();
+    } catch (error) {
+      console.error("Error posting update:", error);
+      setUpdatesMessage("Failed to post update.");
+    } finally {
+      setIsSavingUpdate(false);
+    }
+  };
+
+  const handleDeleteUpdate = async (updateId, updateTitle) => {
+    const confirmed = window.confirm(`Delete update "${updateTitle}"?`);
+    if (!confirmed) return;
+
+    try {
+      await deleteDoc(doc(db, "updates", updateId));
+      setUpdatesMessage("Update deleted successfully.");
+      fetchUpdates();
+    } catch (error) {
+      console.error("Error deleting update:", error);
+      setUpdatesMessage("Failed to delete update.");
+    }
   };
 
   const renderSidebarButton = (id, label) => {
@@ -730,9 +773,10 @@ export default function AdminDashboard() {
 
                     <button
                       type="submit"
-                      className="border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1"
+                      disabled={isSavingUpdate}
+                      className="border-4 border-black bg-black px-6 py-3 font-black uppercase text-white transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      Post Update
+                      {isSavingUpdate ? "Posting..." : "Post Update"}
                     </button>
                   </form>
                 </div>
@@ -743,22 +787,38 @@ export default function AdminDashboard() {
                   </h2>
 
                   <div className="space-y-4">
-                    {updates.map((item) => (
-                      <div
-                        key={item.id}
-                        className="border-2 border-black bg-[#f8f3e8] p-4"
-                      >
-                        <h3 className="text-lg font-black uppercase">
-                          {item.title}
-                        </h3>
-                        <p className="mt-2 text-gray-700">{item.content}</p>
-                        {item.image && (
-                          <p className="mt-3 break-all text-sm font-medium text-[#b60055]">
-                            {item.image}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                    {updates.length === 0 ? (
+                      <p className="text-gray-600">No updates yet.</p>
+                    ) : (
+                      updates.map((item) => (
+                        <div
+                          key={item.id}
+                          className="border-2 border-black bg-[#f8f3e8] p-4"
+                        >
+                          <h3 className="text-lg font-black uppercase">
+                            {item.title}
+                          </h3>
+                          <p className="mt-2 text-gray-700">{item.content}</p>
+                          {item.image && (
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              className="mt-4 h-40 w-full border-2 border-black object-cover"
+                            />
+                          )}
+
+                          <div className="mt-4">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUpdate(item.id, item.title)}
+                              className="border-2 border-black bg-black px-4 py-2 text-sm font-black uppercase text-white hover:-translate-y-0.5 transition"
+                            >
+                              Delete Update
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
