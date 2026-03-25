@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .vscode
+
+server/node_modules
+server/.env
+server/serviceAccountKey.json
+.firebase
