@@ -86,6 +86,10 @@ export default function ProductDetails() {
     );
   }
 
+  const galleryImages = [product.image, ...(product.images || [])]
+    .filter(Boolean)
+    .filter((img, index, arr) => arr.indexOf(img) === index);
+
   return (
     <Layout>
       <section className="px-6 py-10 md:px-10 lg:px-16">
@@ -100,27 +104,24 @@ export default function ProductDetails() {
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              {[product.image, ...(product.images || [])]
-                .filter(Boolean)
-                .filter((img, index, arr) => arr.indexOf(img) === index)
-                .map((img, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setSelectedImage(img)}
-                    className={`border-2 p-2 ${
-                      selectedImage === img
-                        ? "border-[#ff0a7a] bg-[#ffe3f1]"
-                        : "border-black bg-white"
-                    }`}
-                  >
-                    <img
-                      src={`${img}?auto=format&fit=crop&w=400&q=80`}
-                      alt={`${product.name} thumbnail ${index + 1}`}
-                      className="h-[80px] w-full object-contain"
-                    />
-                  </button>
-                ))}
+              {galleryImages.map((img, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setSelectedImage(img)}
+                  className={`border-2 p-2 ${
+                    selectedImage === img
+                      ? "border-[#ff0a7a] bg-[#ffe3f1]"
+                      : "border-black bg-white"
+                  }`}
+                >
+                  <img
+                    src={`${img}?auto=format&fit=crop&w=400&q=80`}
+                    alt={`${product.name} thumbnail ${index + 1}`}
+                    className="h-[80px] w-full object-contain"
+                  />
+                </button>
+              ))}
             </div>
           </div>
 
@@ -160,7 +161,9 @@ export default function ProductDetails() {
               </div>
 
               <p className="mt-3 text-sm font-medium text-gray-600">
-                {selectedSize ? `Selected size: ${selectedSize}` : "No size selected yet"}
+                {selectedSize
+                  ? `Selected size: ${selectedSize}`
+                  : "No size selected yet"}
               </p>
             </div>
 

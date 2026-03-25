@@ -21,6 +21,9 @@ const initialFormData = {
   price: "",
   sizes: "",
   image: "",
+  subImage1: "",
+  subImage2: "",
+  subImage3: "",
   description: "",
   tag: "",
   isNewArrival: false,
@@ -53,23 +56,18 @@ const initialHomepageContent = {
   heroPrimaryButtonLink: "/catalog",
   heroSecondaryButtonText: "Specifications",
   heroSecondaryButtonLink: "/updates",
-
   promoKicker: "Upcoming Data Drop",
   promoTitle: "Hyper-Sonic X",
   promoDays: "04",
   promoHours: "12",
   promoMinutes: "55",
-
   labSeriesTitle: "The Lab Series",
   labSeriesKicker: "Access Protocol",
   promoImageUrl: "",
-
   promoTileOneIcon: "◉",
   promoTileOneTitle: "Global Network",
-
   promoTileTwoIcon: "◎",
   promoTileTwoTitle: "Verified Authentic",
-
   promoTileThreeIcon: "▲",
   promoTileThreeTitle: "Engineered Motion",
 };
@@ -79,23 +77,18 @@ const initialAboutContent = {
   heroTitle: "Off The Grid",
   heroDescription:
     "Off The Grid is a shoe and sneaker retailer focused on showcasing stylish, branded, and newly released footwear. The store highlights strong visual presentation, curated collections, and easy access to product information so customers can browse with confidence.",
-
   storyTitle: "Our Story",
   storyParagraphOne:
     "What started as a simple sneaker retail concept grew into a product showcase platform where customers can explore different brands, compare styles, and keep up with new arrivals.",
   storyParagraphTwo:
     "The goal of the platform is not only to display inventory, but also to help attract more buyers through a clean, bold, and visually engaging website experience.",
-
   ownerTitle: "Owner",
-
   featureOneTitle: "Multiple Brands",
   featureOneDescription:
     "Browse shoes and sneakers from well-known local and global brands in one place.",
-
   featureTwoTitle: "New Arrivals",
   featureTwoDescription:
     "Stay updated with newly released and newly added products in the catalog.",
-
   featureThreeTitle: "Easy Inquiry",
   featureThreeDescription:
     "Customers can quickly view contact details and ask about availability or store visits.",
@@ -135,6 +128,9 @@ export default function AdminDashboard() {
   const [aboutContent, setAboutContent] = useState(initialAboutContent);
   const [aboutMessage, setAboutMessage] = useState("");
   const [isSavingAbout, setIsSavingAbout] = useState(false);
+
+  const [inquiries, setInquiries] = useState([]);
+  const [inquiriesMessage, setInquiriesMessage] = useState("");
 
   const fetchProducts = async () => {
     try {
@@ -261,6 +257,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchInquiries = async () => {
+    try {
+      setInquiriesMessage("");
+      const inquiriesQuery = query(
+        collection(db, "contactMessages"),
+        orderBy("createdAt", "desc")
+      );
+      const snapshot = await getDocs(inquiriesQuery);
+      const data = snapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data(),
+      }));
+      setInquiries(data);
+    } catch (error) {
+      console.error("Error fetching inquiries:", error);
+      setInquiriesMessage("Failed to load inquiries.");
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchStoreInfo();
@@ -269,6 +284,7 @@ export default function AdminDashboard() {
     fetchFeaturedProduct();
     fetchHomepageContent();
     fetchAboutContent();
+    fetchInquiries();
   }, []);
 
   const handleLogout = async () => {
@@ -298,6 +314,16 @@ export default function AdminDashboard() {
       .split(",")
       .map((size) => Number(size.trim()))
       .filter((size) => !Number.isNaN(size));
+  };
+
+  const buildImagesPayload = () => {
+    const subImages = [
+      formData.subImage1.trim(),
+      formData.subImage2.trim(),
+      formData.subImage3.trim(),
+    ].filter(Boolean);
+
+    return subImages;
   };
 
   const handleSubmit = async (e) => {
@@ -335,6 +361,7 @@ export default function AdminDashboard() {
       price: Number(formData.price),
       sizes: parsedSizes,
       image: trimmedImage,
+      images: buildImagesPayload(),
       description: trimmedDescription,
       tag: trimmedTag,
       isNewArrival: Boolean(formData.isNewArrival),
@@ -363,6 +390,7 @@ export default function AdminDashboard() {
   };
 
   const handleEdit = (product) => {
+    const subImages = Array.isArray(product.images) ? product.images : [];
     setEditingProductId(product.id);
     setFormData({
       name: product.name || "",
@@ -370,6 +398,9 @@ export default function AdminDashboard() {
       price: product.price ?? "",
       sizes: Array.isArray(product.sizes) ? product.sizes.join(",") : "",
       image: product.image || "",
+      subImage1: subImages[0] || "",
+      subImage2: subImages[1] || "",
+      subImage3: subImages[2] || "",
       description: product.description || "",
       tag: product.tag || "",
       isNewArrival: Boolean(product.isNewArrival),
@@ -600,23 +631,18 @@ export default function AdminDashboard() {
         heroPrimaryButtonLink: homepageContent.heroPrimaryButtonLink.trim(),
         heroSecondaryButtonText: homepageContent.heroSecondaryButtonText.trim(),
         heroSecondaryButtonLink: homepageContent.heroSecondaryButtonLink.trim(),
-
         promoKicker: homepageContent.promoKicker.trim(),
         promoTitle: homepageContent.promoTitle.trim(),
         promoDays: homepageContent.promoDays.trim(),
         promoHours: homepageContent.promoHours.trim(),
         promoMinutes: homepageContent.promoMinutes.trim(),
-
         labSeriesTitle: homepageContent.labSeriesTitle.trim(),
         labSeriesKicker: homepageContent.labSeriesKicker.trim(),
         promoImageUrl: homepageContent.promoImageUrl.trim(),
-
         promoTileOneIcon: homepageContent.promoTileOneIcon.trim(),
         promoTileOneTitle: homepageContent.promoTileOneTitle.trim(),
-
         promoTileTwoIcon: homepageContent.promoTileTwoIcon.trim(),
         promoTileTwoTitle: homepageContent.promoTileTwoTitle.trim(),
-
         promoTileThreeIcon: homepageContent.promoTileThreeIcon.trim(),
         promoTileThreeTitle: homepageContent.promoTileThreeTitle.trim(),
       };
@@ -651,19 +677,14 @@ export default function AdminDashboard() {
         heroKicker: aboutContent.heroKicker.trim(),
         heroTitle: aboutContent.heroTitle.trim(),
         heroDescription: aboutContent.heroDescription.trim(),
-
         storyTitle: aboutContent.storyTitle.trim(),
         storyParagraphOne: aboutContent.storyParagraphOne.trim(),
         storyParagraphTwo: aboutContent.storyParagraphTwo.trim(),
-
         ownerTitle: aboutContent.ownerTitle.trim(),
-
         featureOneTitle: aboutContent.featureOneTitle.trim(),
         featureOneDescription: aboutContent.featureOneDescription.trim(),
-
         featureTwoTitle: aboutContent.featureTwoTitle.trim(),
         featureTwoDescription: aboutContent.featureTwoDescription.trim(),
-
         featureThreeTitle: aboutContent.featureThreeTitle.trim(),
         featureThreeDescription: aboutContent.featureThreeDescription.trim(),
       };
@@ -708,13 +729,13 @@ export default function AdminDashboard() {
           <aside className="glow-pink border-4 border-black bg-white p-6">
             <h2 className="text-2xl font-black uppercase">Admin Panel</h2>
             <p className="mt-2 text-sm font-medium text-gray-600">
-              Manage products, updates, store details, brands, featured sneaker,
-              homepage content, and about page content.
+              Manage products, content, and customer inquiries.
             </p>
 
             <div className="mt-8 space-y-3">
               {renderSidebarButton("add-product", "Add Product")}
               {renderSidebarButton("inventory", "Inventory")}
+              {renderSidebarButton("inquiries", "Inquiries")}
               {renderSidebarButton("store-info", "Store Info")}
               {renderSidebarButton("updates", "Updates")}
               {renderSidebarButton("brands", "Brands")}
@@ -732,8 +753,7 @@ export default function AdminDashboard() {
                     Admin Dashboard
                   </h1>
                   <p className="mt-2 font-medium">
-                    Manage products, inventory, store details, updates, brands,
-                    featured sneaker, homepage content, and about page content.
+                    Manage products, inventory, content, and inquiries.
                   </p>
                 </div>
 
@@ -820,13 +840,13 @@ export default function AdminDashboard() {
                       value={formData.sizes}
                       onChange={handleChange}
                       className="w-full border-2 border-black px-4 py-3 outline-none"
-                      placeholder="Example: 7,8,9,10"
+                      placeholder="Example: 7,8,9,10 or 89"
                     />
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm font-black uppercase">
-                      Image URL
+                      Main Image URL
                     </label>
                     <input
                       type="text"
@@ -834,7 +854,40 @@ export default function AdminDashboard() {
                       value={formData.image}
                       onChange={handleChange}
                       className="w-full border-2 border-black px-4 py-3 outline-none"
-                      placeholder="Paste product image URL"
+                      placeholder="Main product image URL"
+                    />
+                  </div>
+
+                  <div className="grid gap-4">
+                    <h3 className="text-sm font-black uppercase">
+                      Sub Images (up to 3)
+                    </h3>
+
+                    <input
+                      type="text"
+                      name="subImage1"
+                      value={formData.subImage1}
+                      onChange={handleChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                      placeholder="Sub image URL 1"
+                    />
+
+                    <input
+                      type="text"
+                      name="subImage2"
+                      value={formData.subImage2}
+                      onChange={handleChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                      placeholder="Sub image URL 2"
+                    />
+
+                    <input
+                      type="text"
+                      name="subImage3"
+                      value={formData.subImage3}
+                      onChange={handleChange}
+                      className="w-full border-2 border-black px-4 py-3 outline-none"
+                      placeholder="Sub image URL 3"
                     />
                   </div>
 
@@ -939,6 +992,10 @@ export default function AdminDashboard() {
                             <p className="mt-2 font-bold text-[#b60055]">
                               ₱{Number(product.price).toLocaleString()}
                             </p>
+                            <p className="mt-2 text-sm text-gray-600">
+                              Main image: {product.image ? "Yes" : "No"} | Sub
+                              images: {Array.isArray(product.images) ? product.images.length : 0}
+                            </p>
                           </div>
                         </div>
 
@@ -970,6 +1027,97 @@ export default function AdminDashboard() {
                               ? "Remove from New Arrivals"
                               : "Mark as New Arrival"}
                           </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeSection === "inquiries" && (
+              <div className="glow-pink border-4 border-black bg-white p-6">
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <h2 className="text-2xl font-black uppercase">
+                    Customer Inquiries
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={fetchInquiries}
+                    className="border-2 border-black bg-white px-4 py-2 text-sm font-black uppercase hover:-translate-y-0.5 transition"
+                  >
+                    Refresh
+                  </button>
+                </div>
+
+                {inquiriesMessage && (
+                  <p className="mb-4 text-sm font-bold text-[#b60055]">
+                    {inquiriesMessage}
+                  </p>
+                )}
+
+                <div className="space-y-4">
+                  {inquiries.length === 0 ? (
+                    <p className="text-gray-600">No inquiries yet.</p>
+                  ) : (
+                    inquiries.map((item) => (
+                      <div
+                        key={item.id}
+                        className="border-2 border-black bg-[#f8f3e8] p-4"
+                      >
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Name
+                            </p>
+                            <p className="font-bold">{item.name || "N/A"}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Email
+                            </p>
+                            <p className="font-bold break-all">
+                              {item.email || "N/A"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Product
+                            </p>
+                            <p className="font-bold">{item.productName || "N/A"}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Chosen Size
+                            </p>
+                            <p className="font-bold">{item.sizes || "N/A"}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Brand
+                            </p>
+                            <p className="font-bold">{item.brand || "N/A"}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-black uppercase text-gray-500">
+                              Price
+                            </p>
+                            <p className="font-bold">{item.price || "N/A"}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <p className="text-xs font-black uppercase text-gray-500">
+                            Message
+                          </p>
+                          <p className="mt-1 whitespace-pre-line text-gray-700">
+                            {item.message || "No message"}
+                          </p>
                         </div>
                       </div>
                     ))
