@@ -22,6 +22,7 @@ const initialFormData = {
   image: "",
   description: "",
   tag: "",
+  isNewArrival: false,
 };
 
 const initialStoreInfo = {
@@ -119,10 +120,10 @@ export default function AdminDashboard() {
   }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -175,6 +176,7 @@ export default function AdminDashboard() {
       image: trimmedImage,
       description: trimmedDescription,
       tag: trimmedTag,
+      isNewArrival: Boolean(formData.isNewArrival),
     };
 
     try {
@@ -209,6 +211,7 @@ export default function AdminDashboard() {
       image: product.image || "",
       description: product.description || "",
       tag: product.tag || "",
+      isNewArrival: Boolean(product.isNewArrival),
     });
     setMessage(`Editing "${product.name}"`);
     setActiveSection("add-product");
@@ -231,6 +234,18 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Error deleting product:", error);
       setMessage("Failed to delete product.");
+    }
+  };
+
+  const handleToggleNewArrival = async (product) => {
+    try {
+      await updateDoc(doc(db, "products", product.id), {
+        isNewArrival: !Boolean(product.isNewArrival),
+      });
+      fetchProducts();
+    } catch (error) {
+      console.error("Error toggling new arrival:", error);
+      setMessage("Failed to update new arrival status.");
     }
   };
 
@@ -488,6 +503,17 @@ export default function AdminDashboard() {
                     ></textarea>
                   </div>
 
+                  <label className="flex items-center gap-3 border-2 border-black bg-[#f8f3e8] px-4 py-3 font-black uppercase">
+                    <input
+                      type="checkbox"
+                      name="isNewArrival"
+                      checked={formData.isNewArrival}
+                      onChange={handleChange}
+                      className="h-4 w-4"
+                    />
+                    Mark as New Arrival
+                  </label>
+
                   {message && (
                     <p className="text-sm font-bold text-[#b60055]">{message}</p>
                   )}
@@ -526,6 +552,19 @@ export default function AdminDashboard() {
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div>
+                            <div className="mb-2 flex flex-wrap gap-2">
+                              {product.tag && (
+                                <span className="border-2 border-black bg-[#b60055] px-2 py-1 text-xs font-bold uppercase text-white">
+                                  {product.tag}
+                                </span>
+                              )}
+                              {product.isNewArrival && (
+                                <span className="border-2 border-black bg-[#c1ff72] px-2 py-1 text-xs font-bold uppercase text-black">
+                                  New Arrival
+                                </span>
+                              )}
+                            </div>
+
                             <h3 className="text-lg font-black uppercase">
                               {product.name}
                             </h3>
@@ -536,15 +575,9 @@ export default function AdminDashboard() {
                               ₱{Number(product.price).toLocaleString()}
                             </p>
                           </div>
-
-                          {product.tag && (
-                            <span className="border-2 border-black bg-[#b60055] px-2 py-1 text-xs font-bold uppercase text-white">
-                              {product.tag}
-                            </span>
-                          )}
                         </div>
 
-                        <div className="mt-4 flex gap-3">
+                        <div className="mt-4 flex flex-wrap gap-3">
                           <button
                             type="button"
                             onClick={() => handleEdit(product)}
@@ -559,6 +592,16 @@ export default function AdminDashboard() {
                             className="border-2 border-black bg-black px-4 py-2 text-sm font-black uppercase text-white hover:-translate-y-0.5 transition"
                           >
                             Delete
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleToggleNewArrival(product)}
+                            className="border-2 border-black bg-white px-4 py-2 text-sm font-black uppercase hover:-translate-y-0.5 transition"
+                          >
+                            {product.isNewArrival
+                              ? "Remove from New Arrivals"
+                              : "Mark as New Arrival"}
                           </button>
                         </div>
                       </div>

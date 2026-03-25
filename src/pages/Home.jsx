@@ -6,6 +6,7 @@ import { db } from "../firebase/config";
 
 export default function Home() {
   const [updates, setUpdates] = useState([]);
+  const [newArrivals, setNewArrivals] = useState([]);
 
   useEffect(() => {
     const fetchUpdates = async () => {
@@ -25,7 +26,25 @@ export default function Home() {
       }
     };
 
+    const fetchNewArrivals = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "products"));
+        const data = snapshot.docs
+          .map((item) => ({
+            id: item.id,
+            ...item.data(),
+          }))
+          .filter((product) => product.isNewArrival)
+          .slice(0, 4);
+
+        setNewArrivals(data);
+      } catch (error) {
+        console.error("Error fetching new arrivals:", error);
+      }
+    };
+
     fetchUpdates();
+    fetchNewArrivals();
   }, []);
 
   return (
@@ -113,30 +132,43 @@ export default function Home() {
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((item) => (
-              <div
-                key={item}
-                className="glow-hover border-4 border-black bg-white p-4"
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=600&q=80"
-                  alt="shoe"
-                  className="mb-4 h-[180px] w-full object-contain"
-                />
-
-                <h3 className="text-lg font-black uppercase">
-                  Sneaker Model {item}
-                </h3>
-
-                <p className="text-sm font-medium">
-                  Brand Name
-                </p>
-
-                <p className="mt-2 font-bold text-[#b60055]">
-                  ₱4,999
-                </p>
+            {newArrivals.length === 0 ? (
+              <div className="border-4 border-black bg-white p-6 font-bold uppercase">
+                No new arrivals yet
               </div>
-            ))}
+            ) : (
+              newArrivals.map((product) => (
+                <Link
+                  to={`/product/${product.id}`}
+                  key={product.id}
+                  className="glow-hover border-4 border-black bg-white p-4"
+                >
+                  <div className="relative mb-4 border-2 border-black bg-[#f8f3e8] p-4">
+                    <div className="absolute right-0 top-0 border-b-2 border-l-2 border-black bg-[#c1ff72] px-2 py-1 text-xs font-black uppercase">
+                      New
+                    </div>
+
+                    <img
+                      src={`${product.image}?auto=format&fit=crop&w=600&q=80`}
+                      alt={product.name}
+                      className="h-[180px] w-full object-contain"
+                    />
+                  </div>
+
+                  <h3 className="text-lg font-black uppercase">
+                    {product.name}
+                  </h3>
+
+                  <p className="text-sm font-medium">
+                    {product.brand}
+                  </p>
+
+                  <p className="mt-2 font-bold text-[#b60055]">
+                    ₱{Number(product.price).toLocaleString()}
+                  </p>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </section>
