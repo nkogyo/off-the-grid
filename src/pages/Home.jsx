@@ -30,7 +30,7 @@ const defaultHomepageContent = {
 
   labSeriesTitle: "The Lab Series",
   labSeriesKicker: "Access Protocol",
-  promoImageUrl: "", ;
+  promoImageUrl: "",
 
   promoTileOneIcon: "◉",
   promoTileOneTitle: "Global Network",
@@ -508,7 +508,7 @@ export default function Home() {
             </h2>
 
             <div className="mt-8 inline-block border-2 border-black bg-black px-4 py-3 text-[10px] font-bold uppercase tracking-[0.22em] text-white">
-              © 2026 Off The Grid Monolith. Engineered For Culture. | CI/CD PIPELINE ACTIVE ✅ !!
+              © 2026 Off The Grid Monolith. Engineered For Culture. | CI/CD PIPELINE ACTIVE ✅ !!!
             </div>
           </div>
         </footer>
