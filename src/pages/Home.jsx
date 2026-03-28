@@ -16,7 +16,7 @@ const defaultHomepageContent = {
   heroTitleLine1: "Neon",
   heroTitleLine2: "Velocity",
   heroDescription:
-    "Engineered with kinetic air technology for the urban marathon. The future of culture starts at ground level.", ;
+    "Engineered with kinetic air technology for the urban marathon. The future of culture starts at ground level.",
   heroPrimaryButtonText: "Shop The Drop",
   heroPrimaryButtonLink: "/catalog",
   heroSecondaryButtonText: "Specifications",
@@ -508,7 +508,7 @@ export default function Home() {
             </h2>
 
             <div className="mt-8 inline-block border-2 border-black bg-black px-4 py-3 text-[10px] font-bold uppercase tracking-[0.22em] text-white">
-              © 2026 Off The Grid Monolith. Engineered For Culture. | CI/CD PIPELINE ACTIVE ✅
+              © 2026 Off The Grid Monolith. Engineered For Culture. | CI/CD PIPELINE ACTIVE ✅ !
             </div>
           </div>
         </footer>
