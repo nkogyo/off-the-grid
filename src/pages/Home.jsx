@@ -16,7 +16,7 @@ const defaultHomepageContent = {
   heroTitleLine1: "Neon",
   heroTitleLine2: "Velocity",
   heroDescription:
-    "Engineered with kinetic air technology for the urban marathon. The future of culture starts at ground level.",
+    "Engineered with kinetic air technology for the urban marathon. The future of culture starts at ground level.", ;
   heroPrimaryButtonText: "Shop The Drop",
   heroPrimaryButtonLink: "/catalog",
   heroSecondaryButtonText: "Specifications",
