@@ -11,9 +11,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write        # ← allows pipeline to write to repo
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0     # ← fetches full history
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -44,6 +50,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
+          git pull origin main --no-rebase
           echo "" >> pipeline-log.md
           echo "---" >> pipeline-log.md
           echo "[FAILED] $(date '+%Y-%m-%d %H:%M:%S UTC')" >> pipeline-log.md
