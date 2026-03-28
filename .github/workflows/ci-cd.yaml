@@ -38,6 +38,7 @@ jobs:
         run: |
           npm install -g firebase-tools
           firebase deploy --only hosting --token ${{ secrets.FIREBASE_TOKEN }}
+<<<<<<< HEAD
 
       - name: Log failed build to pipeline-log.md
         if: failure()
@@ -55,3 +56,5 @@ jobs:
           git add pipeline-log.md
           git commit -m "ci: log failed pipeline run"
           git push
+=======
+>>>>>>> b750c7fcbed531b22c72e07a7420ebdebb842b6a
