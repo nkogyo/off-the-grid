@@ -30,7 +30,7 @@ const defaultHomepageContent = {
 
   labSeriesTitle: "The Lab Series",
   labSeriesKicker: "Access Protocol",
-  promoImageUrl: "",
+  promoImageUrl: "", ;
 
   promoTileOneIcon: "◉",
   promoTileOneTitle: "Global Network",
